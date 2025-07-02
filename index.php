@@ -737,7 +737,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             slides.forEach(slide => slide.classList.remove('active'));
             dots.forEach(dot => dot.classList.remove('active'));
             
-            // Add active class to current slide and dot
+            // Add active class to current slide and dots
             slides[index].classList.add('active');
             dots[index].classList.add('active');
             
