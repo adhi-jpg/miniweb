@@ -520,9 +520,10 @@ if (performance.navigation.type === 2) {
         <h2>🎯 Quick Access</h2>
         <div class="card-grid">
             <div class="card">
+                <a href="events_student.php" style="text-decoration: none; color: inherit;">
                 <h3>🎉 My Events</h3>
                 <p>View upcoming and registered events.</p>
-            </div>
+            </div></a>
 
             <div class="card">
                 <h3>✅ My Participation</h3>
