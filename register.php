@@ -10,22 +10,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $department = mysqli_real_escape_string($conn, $_POST["department"]);
     $phone = mysqli_real_escape_string($conn, $_POST["phone"]);
     $email = mysqli_real_escape_string($conn, $_POST["email"]);
-    $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+    $password_plain = $_POST["password"];
+    $password = password_hash($password_plain, PASSWORD_DEFAULT);
 
-    $insert_user = "INSERT INTO users (email, password, role) VALUES ('$email', '$password', 'student')";
-    if ($conn->query($insert_user)) {
-        $user_id = $conn->insert_id;
-
-        $insert_profile = "INSERT INTO student_profiles (user_id, name, roll_number, department, phone)
-                           VALUES ($user_id, '$name', '$roll_number', '$department', '$phone')";
-
-        if ($conn->query($insert_profile)) {
-            $msg = "✅ Registration successful! You can now login.";
-        } else {
-            $msg = "❌ Error saving profile: " . $conn->error;
-        }
+    // ✅ Duplicate checks
+    if ($conn->query("SELECT * FROM users WHERE email = '$email'")->num_rows > 0) {
+        $msg = "❌ Email already registered. Please use a different email.";
+    } elseif ($conn->query("SELECT * FROM student_profiles WHERE roll_number = '$roll_number'")->num_rows > 0) {
+        $msg = "❌ Roll number already registered.";
+    } elseif ($conn->query("SELECT * FROM student_profiles WHERE phone = '$phone'")->num_rows > 0) {
+        $msg = "❌ Phone number already registered.";
     } else {
-        $msg = "❌ Email already registered or failed: " . $conn->error;
+        // ✅ Proceed with insertion
+        $insert_user = "INSERT INTO users (email, password, role) VALUES ('$email', '$password', 'student')";
+        if ($conn->query($insert_user)) {
+            $user_id = $conn->insert_id;
+
+            $insert_profile = "INSERT INTO student_profiles (user_id, name, roll_number, department, phone)
+                               VALUES ($user_id, '$name', '$roll_number', '$department', '$phone')";
+
+            if ($conn->query($insert_profile)) {
+                $msg = "✅ Registration successful! You can now login.";
+            } else {
+                $msg = "❌ Error saving profile: " . $conn->error;
+            }
+        } else {
+            $msg = "❌ Failed to register: " . $conn->error;
+        }
     }
 }
 ?>
@@ -36,11 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <title>MDC Club – Registration</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body, html {
             height: 100%;
@@ -48,7 +55,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             overflow: hidden;
         }
 
-        /* 🔥 Background video styling */
         video.bg-video {
             position: fixed;
             top: 0;
@@ -90,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         input {
             width: 100%;
             padding: 12px;
-            margin: 10px 0 20px;
+            margin: 10px 0 5px;
             border: none;
             border-radius: 8px;
             background: #ffffffee;
@@ -101,6 +107,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         input:focus {
             outline: none;
             box-shadow: 0 0 8px #fdd835aa;
+        }
+
+        input.error {
+            border: 2px solid red;
+        }
+
+        .validation-msg {
+            font-size: 13px;
+            color: red;
+            margin-bottom: 10px;
         }
 
         button {
@@ -114,6 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-weight: bold;
             cursor: pointer;
             transition: background 0.3s;
+            margin-top: 10px;
         }
 
         button:hover {
@@ -151,13 +168,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
 
-<!-- 🎬 Background Video -->
 <video class="bg-video" autoplay muted loop playsinline>
     <source src="videoplayback.mp4" type="video/mp4">
-    Your browser does not support the video tag.
 </video>
 
-<!-- 📝 Registration Form -->
 <div class="container">
     <img src="logggo.png" alt="MDC Logo" class="logo">
     <h2>Student Registration</h2>
@@ -168,13 +182,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     <?php endif; ?>
 
-    <form method="POST">
+    <form method="POST" onsubmit="return validateForm();">
         <input type="text" name="name" placeholder="Full Name" required>
         <input type="text" name="roll_number" placeholder="Roll Number" required>
         <input type="text" name="department" placeholder="Department" required>
         <input type="text" name="phone" placeholder="Phone Number" required>
         <input type="email" name="email" placeholder="Email Address" required>
-        <input type="password" name="password" placeholder="Create Password" required>
+
+        <input type="password" id="password" name="password" placeholder="Create Password" required>
+        <div id="passwordError" class="validation-msg"></div>
+
+        <input type="password" id="confirm_password" placeholder="Confirm Password" required>
+        <div id="confirmError" class="validation-msg"></div>
+
         <button type="submit">Register</button>
     </form>
 
@@ -182,6 +202,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         Already have an account? <a href="login.php">Login here</a>
     </div>
 </div>
+
+<script>
+function validateForm() {
+    const pwd = document.getElementById("password");
+    const confirmPwd = document.getElementById("confirm_password");
+    const pwdErr = document.getElementById("passwordError");
+    const confirmErr = document.getElementById("confirmError");
+
+    pwdErr.textContent = "";
+    confirmErr.textContent = "";
+    pwd.classList.remove("error");
+    confirmPwd.classList.remove("error");
+
+    const strong = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!strong.test(pwd.value)) {
+        pwdErr.textContent = "Password must be at least 8 characters, include a number and an uppercase letter.";
+        pwd.classList.add("error");
+        return false;
+    }
+
+    if (pwd.value !== confirmPwd.value) {
+        confirmErr.textContent = "Passwords do not match.";
+        confirmPwd.classList.add("error");
+        return false;
+    }
+
+    return true;
+}
+</script>
 
 </body>
 </html>
