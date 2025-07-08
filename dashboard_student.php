@@ -93,6 +93,58 @@ $student = $conn->query("SELECT name, roll_number, department FROM student_profi
             background: linear-gradient(135deg, #ffed4a, #ffd700);
         }
 
+        /* Scrolling Banner Styles */
+        .announcement-banner {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            position: relative;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .announcement-banner::before {
+            content: '📢';
+            position: absolute;
+            left: 20px;
+            font-size: 24px;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0 10px;
+        }
+
+        .banner-content {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            animation: scroll 30s linear infinite;
+            padding-left: 80px;
+        }
+
+        .banner-item {
+            margin-right: 100px;
+            color: #333;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .banner-item strong {
+            color: #667eea;
+            margin-right: 10px;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
         .container {
             padding: 40px;
             max-width: 1400px;
@@ -361,6 +413,18 @@ $student = $conn->query("SELECT name, roll_number, department FROM student_profi
             .card-grid {
                 grid-template-columns: 1fr;
             }
+
+            .announcement-banner {
+                height: 50px;
+            }
+
+            .banner-content {
+                padding-left: 60px;
+            }
+
+            .banner-item {
+                font-size: 14px;
+            }
         }
 
         /* Floating particles animation */
@@ -430,25 +494,26 @@ if (performance.navigation.type === 2) {
     </div>
 </header>
 
-<div class="container">
-
-    <!-- 📢 Announcements -->
-    <div class="section">
-        <h2>📢 Announcements</h2>
+<!-- Scrolling Banner for Announcements -->
+<div class="announcement-banner">
+    <div class="banner-content">
         <?php
         $announcements = $conn->query("SELECT * FROM announcements ORDER BY posted_on DESC LIMIT 5");
         if ($announcements->num_rows > 0) {
             while ($a = $announcements->fetch_assoc()) {
-                echo "<div class='announcement'>
+                echo "<div class='banner-item'>
                         <strong>" . date("d M Y", strtotime($a["posted_on"])) . "</strong>
-                        <p>" . htmlspecialchars($a["message"]) . "</p>
+                        " . htmlspecialchars($a["message"]) . "
                       </div>";
             }
         } else {
-            echo "<p>No announcements available.</p>";
+            echo "<div class='banner-item'>No announcements available.</div>";
         }
         ?>
     </div>
+</div>
+
+<div class="container">
 
     <!-- 📦 Original Dashboard Cards -->
     <div class="section">

@@ -703,7 +703,7 @@ if (isset($_POST["add_admin"])) {
                 <i class="fas fa-bullhorn"></i>
                 Post Announcement
             </a>
-            <a href="#" class="nav-item">
+            <a href="create_event.php" class="nav-item">
                 <i class="fas fa-calendar-plus"></i>
                 Create Event
             </a>
@@ -749,7 +749,7 @@ if (isset($_POST["add_admin"])) {
                 </div>
             </div>
         </div>
-
+          <a href="create_event.php" style="text-decoration: none; color: inherit;">
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">
@@ -757,7 +757,7 @@ if (isset($_POST["add_admin"])) {
                 </div>
                 <h3>New Event</h3>
                 <p>Create and schedule upcoming events for your club members</p>
-            </div>
+            </div></a>
             
             <div class="stat-card">
                 <div class="stat-icon">
@@ -785,6 +785,15 @@ if (isset($_POST["add_admin"])) {
                 <p>Manage and update T-shirts, hoodies, and other items</p>
             </div>
         </div>
+        <a href="manage_events.php" style="text-decoration: none; color: inherit;">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-minus"></i>
+                </div>
+                <h3>Manage events</h3>
+                <p>edit,delete and update events</p>
+            </div>
 
         <div class="admin-form-container">
             <div class="form-header">

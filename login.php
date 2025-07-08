@@ -520,10 +520,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
         
         <button type="submit" class="submit-btn">Sign In</button>
-        
-        <div class="form-links">
-            <a href="forgot_password.php" class="forgot-password">Forgot your password?</a>
-        </div>
     </form>
     
     <div class="register-link">
