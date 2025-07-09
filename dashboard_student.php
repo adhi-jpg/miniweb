@@ -1,14 +1,25 @@
+
 <?php
 session_start();
 
-// Strong cache prevention
+// 🔒 Strong cache prevention
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header("Expires: 0");
 
-// Redirect if session doesn't exist or wrong role
-if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "student") {
+// 🛡️ Enhanced session validation and cleanup
+if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "student" || empty($_SESSION["user_id"])) {
+    // Destroy any existing session data
+    session_unset();
+    session_destroy();
+    
+    // Delete session cookie
+    if (isset($_COOKIE[session_name()])) {
+        setcookie(session_name(), '', time()-3600, '/');
+    }
+    
+    // Redirect to login
     header("Location: login.php");
     exit();
 }
@@ -16,7 +27,25 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "student") {
 include "config.php";
 
 $user_id = $_SESSION["user_id"];
-$student = $conn->query("SELECT name, roll_number, department FROM student_profiles WHERE user_id = $user_id")->fetch_assoc();
+
+// 🔍 Secure database query with prepared statement
+$stmt = $conn->prepare("SELECT name, roll_number, department FROM student_profiles WHERE user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$student = $result->fetch_assoc();
+
+// Check if student profile exists
+if (!$student) {
+    // Handle case where student profile doesn't exist
+    $student = [
+        'name' => 'Profile Not Found',
+        'roll_number' => 'N/A',
+        'department' => 'N/A'
+    ];
+}
+
+$stmt->close();
 ?>
 <!DOCTYPE html>
 <html>

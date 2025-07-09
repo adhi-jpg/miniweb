@@ -15,13 +15,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // ✅ Duplicate checks
     if ($conn->query("SELECT * FROM users WHERE email = '$email'")->num_rows > 0) {
-        $msg = "❌ Email already registered. Please use a different email.";
+        $msg = "❌ Email already registered.";
     } elseif ($conn->query("SELECT * FROM student_profiles WHERE roll_number = '$roll_number'")->num_rows > 0) {
         $msg = "❌ Roll number already registered.";
     } elseif ($conn->query("SELECT * FROM student_profiles WHERE phone = '$phone'")->num_rows > 0) {
         $msg = "❌ Phone number already registered.";
     } else {
-        // ✅ Proceed with insertion
         $insert_user = "INSERT INTO users (email, password, role) VALUES ('$email', '$password', 'student')";
         if ($conn->query($insert_user)) {
             $user_id = $conn->insert_id;
@@ -168,10 +167,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
 
+<!-- 🎬 Background Video -->
 <video class="bg-video" autoplay muted loop playsinline>
     <source src="videoplayback.mp4" type="video/mp4">
 </video>
 
+<!-- 📝 Registration Form -->
 <div class="container">
     <img src="logggo.png" alt="MDC Logo" class="logo">
     <h2>Student Registration</h2>
@@ -183,10 +184,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php endif; ?>
 
     <form method="POST" onsubmit="return validateForm();">
-        <input type="text" name="name" placeholder="Full Name" required>
+        <input type="text" name="name" placeholder="Full Name" required pattern="[A-Za-z\s]+" title="Name must contain only letters and spaces">
         <input type="text" name="roll_number" placeholder="Roll Number" required>
         <input type="text" name="department" placeholder="Department" required>
-        <input type="text" name="phone" placeholder="Phone Number" required>
+        <input type="text" name="phone" id="phone" placeholder="Phone Number" required pattern="\d{10}" title="Phone number must be 10 digits">
         <input type="email" name="email" placeholder="Email Address" required>
 
         <input type="password" id="password" name="password" placeholder="Create Password" required>
@@ -207,6 +208,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 function validateForm() {
     const pwd = document.getElementById("password");
     const confirmPwd = document.getElementById("confirm_password");
+    const phone = document.getElementById("phone");
+
     const pwdErr = document.getElementById("passwordError");
     const confirmErr = document.getElementById("confirmError");
 
@@ -214,6 +217,7 @@ function validateForm() {
     confirmErr.textContent = "";
     pwd.classList.remove("error");
     confirmPwd.classList.remove("error");
+    phone.classList.remove("error");
 
     const strong = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!strong.test(pwd.value)) {
@@ -225,6 +229,13 @@ function validateForm() {
     if (pwd.value !== confirmPwd.value) {
         confirmErr.textContent = "Passwords do not match.";
         confirmPwd.classList.add("error");
+        return false;
+    }
+
+    const phonePattern = /^\d{10}$/;
+    if (!phonePattern.test(phone.value)) {
+        phone.classList.add("error");
+        alert("📱 Phone number must be exactly 10 digits.");
         return false;
     }
 

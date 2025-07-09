@@ -2,11 +2,26 @@
 session_start();
 include "config.php";
 
-// 🛡️ Redirect non-admin users
-if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
+// 🛡️ Enhanced session validation and cache control
+if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin" || empty($_SESSION["user_id"])) {
+    // Destroy any existing session data
+    session_unset();
+    session_destroy();
+    
+    // Delete session cookie
+    if (isset($_COOKIE[session_name()])) {
+        setcookie(session_name(), '', time()-3600, '/');
+    }
+    
+    // Redirect to login
     header("Location: login.php");
     exit();
 }
+
+// 🔒 Prevent page caching to avoid back button issues
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
 
 $admin_msg = "";
 
@@ -14,7 +29,7 @@ $admin_msg = "";
 if (isset($_POST["add_admin"])) {
     $new_email = mysqli_real_escape_string($conn, $_POST["new_admin_email"]);
     $new_password = password_hash($_POST["new_admin_password"], PASSWORD_DEFAULT);
-
+    
     // Check if email exists
     $check = $conn->query("SELECT * FROM users WHERE email = '$new_email'");
     if ($check->num_rows > 0) {
@@ -28,6 +43,7 @@ if (isset($_POST["add_admin"])) {
         }
     }
 }
+?>
 ?>
 <!DOCTYPE html>
 <html lang="en">
