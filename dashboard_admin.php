@@ -739,6 +739,10 @@ if (isset($_POST["add_admin"])) {
                 <i class="fas fa-tshirt"></i>
                 Merchandise
             </a>
+             <a href="#" class="nav-item">
+                <i class="fas fa-file-alt"></i>
+                Reports
+            </a>
         </nav>
         
         <div class="logout-section">
@@ -789,7 +793,7 @@ if (isset($_POST["add_admin"])) {
                         <i class="fas fa-bullhorn"></i>
                     </div>
                     <h3>Announcements</h3>
-                    <p>Post important updates for students and faculty</p>
+                    <p>Post important updates for students and faculty</p><br>
                 </div>
             </a>
             
@@ -809,7 +813,16 @@ if (isset($_POST["add_admin"])) {
                 </div>
                 <h3>Manage events</h3>
                 <p>edit,delete and update events</p>
-            </div>
+            </div></a>
+ <a href="report.php" style="text-decoration: none; color: inherit;">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                   <i class="fas fa-file-alt"></i>
+                </div>
+                <h3>Reports</h3>
+                <p>Submit reports on club activities</p>
+            </div></a>
 
         <div class="admin-form-container">
             <div class="form-header">
