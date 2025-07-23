@@ -723,13 +723,9 @@ if (isset($_POST["add_admin"])) {
                 <i class="fas fa-calendar-plus"></i>
                 Create Event
             </a>
-            <a href="#" class="nav-item">
+            <a href="view_event_registrations.php" class="nav-item">
                 <i class="fas fa-users"></i>
                 View Registrations
-            </a>
-            <a href="#" class="nav-item">
-                <i class="fas fa-check-circle"></i>
-                Approve Participation
             </a>
             <a href="#" class="nav-item">
                 <i class="fas fa-envelope"></i>
@@ -739,7 +735,7 @@ if (isset($_POST["add_admin"])) {
                 <i class="fas fa-tshirt"></i>
                 Merchandise
             </a>
-             <a href="#" class="nav-item">
+             <a href="report.php" class="nav-item">
                 <i class="fas fa-file-alt"></i>
                 Reports
             </a>
@@ -778,14 +774,14 @@ if (isset($_POST["add_admin"])) {
                 <h3>New Event</h3>
                 <p>Create and schedule upcoming events for your club members</p>
             </div></a>
-            
+             <a href="view_event_registrations.php" style="text-decoration: none; color: inherit;">
             <div class="stat-card">
                 <div class="stat-icon">
                     <i class="fas fa-users"></i>
                 </div>
                 <h3>Registrations</h3>
                 <p>View and manage student registrations and participation</p>
-            </div>
+            </div></a>
             
             <a href="admin_post_announcement.php" style="text-decoration: none; color: inherit;">
                 <div class="stat-card">
@@ -814,8 +810,8 @@ if (isset($_POST["add_admin"])) {
                 <h3>Manage events</h3>
                 <p>edit,delete and update events</p>
             </div></a>
- <a href="report.php" style="text-decoration: none; color: inherit;">
         <div class="stats-grid">
+             <a href="report.php" style="text-decoration: none; color: inherit;">
             <div class="stat-card">
                 <div class="stat-icon">
                    <i class="fas fa-file-alt"></i>
@@ -823,7 +819,15 @@ if (isset($_POST["add_admin"])) {
                 <h3>Reports</h3>
                 <p>Submit reports on club activities</p>
             </div></a>
-
+ <a href=" admin_view_report_status.php" style="text-decoration: none; color: inherit;">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <h3>View status of reports</h3>
+                    <p>to view the reports are approved or rejected by the faculty</p><br>
+                </div>
+            </a>
         <div class="admin-form-container">
             <div class="form-header">
                 <h2>Add New Admin</h2>
