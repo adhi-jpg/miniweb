@@ -731,7 +731,7 @@ if (isset($_POST["add_admin"])) {
                 <i class="fas fa-envelope"></i>
                 Messages
             </a>
-            <a href="#" class="nav-item">
+            <a href="admin_manage_merchandise.php" class="nav-item">
                 <i class="fas fa-tshirt"></i>
                 Merchandise
             </a>
@@ -792,15 +792,15 @@ if (isset($_POST["add_admin"])) {
                     <p>Post important updates for students and faculty</p><br>
                 </div>
             </a>
-            
+             <a href=" admin_manage_merchandise.php" style="text-decoration: none; color: inherit;">
             <div class="stat-card">
                 <div class="stat-icon">
                     <i class="fas fa-tshirt"></i>
                 </div>
                 <h3>Merchandise</h3>
                 <p>Manage and update T-shirts, hoodies, and other items</p>
-            </div>
-        </div>
+            </div></a>
+    </div>
         <a href="manage_events.php" style="text-decoration: none; color: inherit;">
         <div class="stats-grid">
             <div class="stat-card">
@@ -819,13 +819,22 @@ if (isset($_POST["add_admin"])) {
                 <h3>Reports</h3>
                 <p>Submit reports on club activities</p>
             </div></a>
- <a href=" admin_view_report_status.php" style="text-decoration: none; color: inherit;">
+                 <a href=" admin_view_report_status.php" style="text-decoration: none; color: inherit;">
                 <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-bullhorn"></i>
+                        <i class="fas fa-eye"></i>
                     </div>
                     <h3>View status of reports</h3>
                     <p>to view the reports are approved or rejected by the faculty</p><br>
+                </div>
+            </a>
+               <a href="admin_view_orders.php" style="text-decoration: none; color: inherit;">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <h3>Orders</h3>
+                    <p>to view the orders by the students for mdc products</p><br>
                 </div>
             </a>
         <div class="admin-form-container">

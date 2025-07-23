@@ -568,6 +568,13 @@ if (performance.navigation.type === 2) {
                 <h3>📚 Resources</h3>
                 <p>Access club materials and past content.</p>
             </div>
+            
+            <div class="card">
+                <a href=" student_buy_merchandise.php" style="text-decoration: none; color: inherit;">
+                <h3>✅ Mdc Products</h3>
+                <p>To buy Mdc products for further programs.</p>
+            </div></a>
+
         </div>
     </div>
 
