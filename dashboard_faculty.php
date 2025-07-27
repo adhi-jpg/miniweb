@@ -573,6 +573,11 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "faculty") {
                 <h3>Approve Event Participation</h3>
                 <p>Review and approve student participation requests with detailed evaluation criteria and instant notifications.</p>
             </div>
+            <div class="card">
+             <a href="view_reports.php" style="text-decoration: none; color: inherit;">
+                <h3>View and approve Reports</h3>
+                <p>To view and approve reports from the executives.</p>
+            </div>
 
             <div class="card">
                 <h3>Post Announcements</h3>
