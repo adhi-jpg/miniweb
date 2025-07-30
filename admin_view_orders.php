@@ -609,16 +609,20 @@ $result = $conn->query($query);
         </div>
 
         <?php
-        // Calculate statistics
-        $stats = ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
-        if ($result && $result->num_rows > 0) {
-            $result->data_seek(0);
-            while ($row = $result->fetch_assoc()) {
-                $stats['total']++;
-                $stats[$row['status']]++;
-            }
-            $result->data_seek(0);
+       // Calculate statistics
+$stats = ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
+if ($result && $result->num_rows > 0) {
+    $result->data_seek(0);
+    while ($row = $result->fetch_assoc()) {
+        $stats['total']++;
+        if (isset($stats[$row['status']])) {
+            $stats[$row['status']]++;
         }
+        // Otherwise: ignore unknown/missing status silently
+    }
+    $result->data_seek(0);
+}
+
         ?>
 
         <div class="dashboard-stats">
