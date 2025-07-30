@@ -765,78 +765,107 @@ if (isset($_POST["add_admin"])) {
                 </div>
             </div>
         </div>
-          <a href="create_event.php" style="text-decoration: none; color: inherit;">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-plus"></i>
-                </div>
-                <h3>New Event</h3>
-                <p>Create and schedule upcoming events for your club members</p>
-            </div></a>
-             <a href="view_event_registrations.php" style="text-decoration: none; color: inherit;">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <h3>Registrations</h3>
-                <p>View and manage student registrations and participation</p>
-            </div></a>
-            
-            <a href="admin_post_announcement.php" style="text-decoration: none; color: inherit;">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-bullhorn"></i>
-                    </div>
-                    <h3>Announcements</h3>
-                    <p>Post important updates for students and faculty</p><br>
-                </div>
-            </a>
-             <a href=" admin_manage_merchandise.php" style="text-decoration: none; color: inherit;">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-tshirt"></i>
-                </div>
-                <h3>Merchandise</h3>
-                <p>Manage and update T-shirts, hoodies, and other items</p>
-            </div></a>
-    </div>
-        <a href="manage_events.php" style="text-decoration: none; color: inherit;">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-minus"></i>
-                </div>
-                <h3>Manage events</h3>
-                <p>edit,delete and update events</p>
-            </div></a>
-        <div class="stats-grid">
-             <a href="report.php" style="text-decoration: none; color: inherit;">
-            <div class="stat-card">
-                <div class="stat-icon">
-                   <i class="fas fa-file-alt"></i>
-                </div>
-                <h3>Reports</h3>
-                <p>Submit reports on club activities</p>
-            </div></a>
-                 <a href=" admin_view_report_status.php" style="text-decoration: none; color: inherit;">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <h3>View status of reports</h3>
-                    <p>to view the reports are approved or rejected by the faculty</p><br>
-                </div>
-            </a>
-               <a href="admin_view_orders.php" style="text-decoration: none; color: inherit;">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <h3>Orders</h3>
-                    <p>to view the orders by the students for mdc products</p><br>
-                </div>
-            </a>
+         <div class="stats-grid">
+    <!-- 1. New Event -->
+    <a href="create_event.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-plus"></i>
+            </div>
+            <h3>New Event</h3>
+            <p>Create and schedule upcoming events for your club members</p>
+        </div>
+    </a>
+
+    <!-- 2. Manage Events -->
+    <a href="manage_events.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-minus"></i>
+            </div>
+            <h3>Manage events</h3>
+            <p>edit,delete and update events</p>
+        </div>
+    </a>
+
+    <!-- 3. Registrations -->
+    <a href="view_event_registrations.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>Registrations</h3>
+            <p>View and manage student registrations and participation</p>
+        </div>
+    </a>
+
+    <!-- 4. Announcements -->
+    <a href="admin_post_announcement.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <h3>Announcements</h3>
+            <p>Post important updates for students and faculty</p><br>
+        </div>
+    </a>
+
+    <!-- 5. Media -->
+    <a href="admin_media_upload.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <h3>Media</h3>
+            <p>Upload media of program history</p><br>
+        </div>
+    </a>
+
+    <!-- 6. Merchandise -->
+    <a href="admin_manage_merchandise.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-tshirt"></i>
+            </div>
+            <h3>Merchandise</h3>
+            <p>Manage and update T-shirts, hoodies, and other items</p>
+        </div>
+    </a>
+
+    <!-- 7. Orders -->
+    <a href="admin_view_orders.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-eye"></i>
+            </div>
+            <h3>Orders</h3>
+            <p>to view the orders by the students for mdc products</p><br>
+        </div>
+    </a>
+
+    <!-- 8. Reports -->
+    <a href="report.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <h3>Reports</h3>
+            <p>Submit reports on club activities</p>
+        </div>
+    </a>
+
+    <!-- 9. View Status of Reports -->
+    <a href="admin_view_report_status.php" style="text-decoration: none; color: inherit;">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-eye"></i>
+            </div>
+            <h3>View status of reports</h3>
+            <p>to view the reports are approved or rejected by the faculty</p><br>
+        </div>
+    </a>
+</div>
+
         <div class="admin-form-container">
             <div class="form-header">
                 <h2>Add New Admin</h2>
