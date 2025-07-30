@@ -492,4 +492,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     </script>
 </body>
+<<<<<<< HEAD
 </html>
+=======
+</html>
+>>>>>>> 76fb34456558ac3c49663dc9a215ef3b13a9ec65
