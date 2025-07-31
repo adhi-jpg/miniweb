@@ -414,7 +414,6 @@
         <h1><i class="fas fa-users"></i> MDC Club – About Us</h1>
         <nav>
             <a href="index.php"><i class="fas fa-home"></i> Home</a>
-            <a href="about .php"><i class="fas fa-info-circle"></i> About</a>
             <a href="contact.php"><i class="fas fa-envelope"></i> Contact</a>
         </nav>
     </header>

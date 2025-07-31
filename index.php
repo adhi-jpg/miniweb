@@ -620,7 +620,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="logo-text">MDC CLUB</div>
         </div>
         <nav>
-            <a href="#home"><i class="fas fa-home"></i> Home</a>
             <a href="about .php"><i class="fas fa-info-circle"></i> About</a>
             <a href="register.php"><i class="fas fa-user-plus"></i> Register</a>
             <a href="login.php"><i class="fas fa-sign-in-alt"></i> Login</a>

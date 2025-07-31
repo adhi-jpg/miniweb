@@ -568,6 +568,11 @@ if (performance.navigation.type === 2) {
                 <h3>📚 Resources</h3>
                 <p>Access club materials and past content.</p>
             </div>
+             <div class="card">
+                <a href="student_attendance.php" style="text-decoration: none; color: inherit;">
+                <h3>✅ Attendance</h3>
+                <p>View the attendance.</p>
+            </div></a>
             <div class="card">
                 <a href="view_media_gallery.php" style="text-decoration: none; color: inherit;">
                 <h3>✅ Gallery</h3>

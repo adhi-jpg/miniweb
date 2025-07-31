@@ -731,6 +731,14 @@ if (isset($_POST["add_admin"])) {
                 <i class="fas fa-envelope"></i>
                 Messages
             </a>
+             <a href="admin_attendance.php" class="nav-item">
+                <i class="fas fa-user-check"></i>
+                Attendance
+            </a>
+               <a href="admin_view_attendance.php" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                View Attendance
+            </a>
             <a href="admin_manage_merchandise.php" class="nav-item">
                 <i class="fas fa-tshirt"></i>
                 Merchandise
@@ -814,7 +822,7 @@ if (isset($_POST["add_admin"])) {
     <a href="admin_media_upload.php" style="text-decoration: none; color: inherit;">
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="fas fa-bullhorn"></i>
+                <i class="fas fa-image"></i>
             </div>
             <h3>Media</h3>
             <p>Upload media of program history</p><br>
