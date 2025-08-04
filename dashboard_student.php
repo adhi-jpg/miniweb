@@ -555,9 +555,10 @@ if (performance.navigation.type === 2) {
             </div></a>
 
             <div class="card">
+                <a href="student_participation_history.php" style="text-decoration: none; color: inherit;">
                 <h3>✅ My Participation</h3>
                 <p>Track your event history and approvals.</p>
-            </div>
+            </div></a>
 
             <div class="card">
                 <h3>📝 Submit Feedback</h3>

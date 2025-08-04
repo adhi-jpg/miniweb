@@ -581,9 +581,10 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "faculty") {
             </div></a>
 
             <div class="card">
-                <h3>Post Announcements</h3>
-                <p>Publish important updates, event notifications, and institutional communications for all students.</p>
-            </div>
+                 <a href="chat_faculty.php" style="text-decoration: none; color: inherit;">
+                <h3>Chat</h3>
+                <p>Communicate with admin.</p>
+            </div></a>
 
             <div class="card">
                 <h3>View Feedback</h3>

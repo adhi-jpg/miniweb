@@ -727,7 +727,7 @@ if (isset($_POST["add_admin"])) {
                 <i class="fas fa-users"></i>
                 View Registrations
             </a>
-            <a href="#" class="nav-item">
+            <a href="chat_admin.php" class="nav-item">
                 <i class="fas fa-envelope"></i>
                 Messages
             </a>
