@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 
@@ -29,7 +28,7 @@ include "config.php";
 $user_id = $_SESSION["user_id"];
 
 // 🔍 Secure database query with prepared statement
-$stmt = $conn->prepare("SELECT name, roll_number, department FROM student_profiles WHERE user_id = ?");
+$stmt = $conn->prepare("SELECT name, roll_number, department, phone FROM student_profiles WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -41,18 +40,52 @@ if (!$student) {
     $student = [
         'name' => 'Profile Not Found',
         'roll_number' => 'N/A',
-        'department' => 'N/A'
+        'department' => 'N/A',
+        'phone' => 'N/A'
     ];
 }
 
 $stmt->close();
+
+// Get dynamic profile statistics
+// Count events joined by this student from event_participation table
+$events_joined_query = $conn->prepare("SELECT COUNT(*) as count FROM event_participation WHERE user_id = ?");
+$events_joined_query->bind_param("i", $user_id);
+$events_joined_query->execute();
+$events_joined = $events_joined_query->get_result()->fetch_assoc()['count'];
+$events_joined_query->close();
+
+// Count confirmed participations from event_participation table
+$certificates_query = $conn->prepare("SELECT COUNT(*) as count FROM event_participation WHERE user_id = ? AND status = 'confirmed'");
+$certificates_query->bind_param("i", $user_id);
+$certificates_query->execute();
+$certificates = $certificates_query->get_result()->fetch_assoc()['count'];
+$certificates_query->close();
+
+// Calculate attendance percentage from attendance table
+$attendance_query = $conn->prepare("SELECT COUNT(*) as total_events, 
+    SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count 
+    FROM attendance WHERE user_id = ?");
+$attendance_query->bind_param("i", $user_id);
+$attendance_query->execute();
+$attendance_result = $attendance_query->get_result()->fetch_assoc();
+$attendance_percentage = ($attendance_result['total_events'] > 0) ? 
+    round(($attendance_result['present_count'] / $attendance_result['total_events']) * 100) : 0;
+$attendance_query->close();
+
+// Get latest announcements count (for notifications)
+$notifications_query = $conn->prepare("SELECT COUNT(*) as count FROM announcements WHERE posted_on >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+$notifications_query->execute();
+$notifications_count = $notifications_query->get_result()->fetch_assoc()['count'];
+$notifications_query->close();
 ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Student Dashboard – MDC Club</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -60,14 +93,36 @@ $stmt->close();
             box-sizing: border-box;
         }
 
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-strong: rgba(255, 255, 255, 0.9);
+            --border: rgba(255, 255, 255, 0.2);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --border-radius: 20px;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
         }
 
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Floating Elements */
         body::before {
             content: '';
             position: fixed;
@@ -82,25 +137,170 @@ $stmt->close();
             z-index: -1;
         }
 
-        header {
-            background: rgba(255, 255, 255, 0.1);
+        /* Profile Sidebar */
+        .profile-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 350px;
+            height: 100vh;
+            background: var(--glass);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: 1px solid var(--border);
+            z-index: 1000;
+            padding: 30px;
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .profile-sidebar.open {
+            transform: translateX(0);
+        }
+
+        .profile-toggle {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            padding: 20px 40px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .profile-toggle:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            margin: 0 auto 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .profile-info h3 {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .profile-info p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 15px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .profile-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+
+        .profile-btn i {
+            font-size: 18px;
+        }
+
+        /* Header */
+        header {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            color: white;
+            padding: 25px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
         }
 
         header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             animation: slideInLeft 0.8s ease-out;
         }
 
@@ -122,84 +322,91 @@ $stmt->close();
             background: linear-gradient(135deg, #ffed4a, #ffd700);
         }
 
-        /* Scrolling Banner Styles */
+        /* Announcement Banner */
         .announcement-banner {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--glass-strong);
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid var(--border);
             overflow: hidden;
             position: relative;
-            height: 60px;
+            height: 70px;
             display: flex;
             align-items: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
         }
 
         .announcement-banner::before {
             content: '📢';
             position: absolute;
-            left: 20px;
-            font-size: 24px;
+            left: 25px;
+            font-size: 28px;
             z-index: 2;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 0 10px;
+            background: var(--glass-strong);
+            padding: 0 15px;
+            border-radius: 50%;
         }
 
         .banner-content {
             display: flex;
             align-items: center;
             white-space: nowrap;
-            animation: scroll 30s linear infinite;
-            padding-left: 80px;
+            animation: scroll 35s linear infinite;
+            padding-left: 100px;
         }
 
         .banner-item {
-            margin-right: 100px;
+            margin-right: 120px;
             color: #333;
             font-weight: 500;
             font-size: 16px;
         }
 
         .banner-item strong {
-            color: #667eea;
-            margin-right: 10px;
+            color: var(--primary);
+            margin-right: 15px;
+            font-weight: 700;
         }
 
         @keyframes scroll {
-            0% {
-                transform: translateX(100%);
-            }
-            100% {
-                transform: translateX(-100%);
-            }
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Main Content */
+        .main-content {
+            padding-right: 0;
+            transition: padding-right 0.4s ease;
+        }
+
+        .main-content.with-sidebar {
+            padding-right: 350px;
         }
 
         .container {
-            padding: 40px;
+            padding: 50px 40px;
             max-width: 1400px;
             margin: 0 auto;
         }
 
         .section {
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             animation: fadeInUp 0.8s ease-out forwards;
             opacity: 0;
             transform: translateY(30px);
         }
 
-        .section:nth-child(1) { animation-delay: 0.2s; }
-        .section:nth-child(2) { animation-delay: 0.4s; }
-        .section:nth-child(3) { animation-delay: 0.6s; }
+        .section:nth-child(1) { animation-delay: 0.3s; }
+        .section:nth-child(2) { animation-delay: 0.5s; }
+        .section:nth-child(3) { animation-delay: 0.7s; }
 
         .section h2 {
-            margin-top: 0;
-            margin-bottom: 24px;
+            margin-bottom: 30px;
             color: white;
-            font-size: 28px;
-            font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 32px;
+            font-weight: 800;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             position: relative;
-            padding-left: 20px;
+            padding-left: 25px;
         }
 
         .section h2::before {
@@ -209,28 +416,31 @@ $stmt->close();
             top: 50%;
             transform: translateY(-50%);
             width: 6px;
-            height: 40px;
+            height: 45px;
             background: linear-gradient(135deg, #ffd700, #ffed4a);
             border-radius: 3px;
-            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+            box-shadow: 0 2px 15px rgba(255, 215, 0, 0.4);
         }
 
+        /* Card Grid */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.9);
+            background: var(--glass-strong);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 32px;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+            padding: 35px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             overflow: hidden;
+            text-decoration: none;
+            color: inherit;
         }
 
         .card::before {
@@ -240,231 +450,66 @@ $stmt->close();
             left: 0;
             width: 100%;
             height: 4px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: var(--shadow-strong);
             background: rgba(255, 255, 255, 0.95);
         }
 
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card:hover::after {
+            opacity: 1;
+        }
+
         .card h3 {
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             color: #333;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
         }
 
         .card p {
             color: #666;
             line-height: 1.6;
-            font-size: 14px;
-        }
-
-        .announcement {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            padding: 24px;
-            margin-bottom: 20px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
+            font-size: 15px;
             position: relative;
-            overflow: hidden;
+            z-index: 1;
         }
 
-        .announcement::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .announcement:hover {
-            transform: translateX(4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .announcement strong {
-            display: block;
-            color: #333;
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
-
-        .announcement p {
-            margin: 0;
-            color: #555;
-            line-height: 1.6;
-        }
-
-        .feedback textarea {
-            width: 100%;
-            border-radius: 12px;
-            padding: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            resize: vertical;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .feedback textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .feedback button {
-            margin-top: 12px;
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-            font-family: 'Inter', sans-serif;
-        }
-
-        .feedback button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-            background: linear-gradient(135deg, #764ba2, #667eea);
-        }
-
-        .msg {
-            color: #10b981;
-            font-weight: 600;
-            margin-top: 12px;
-            padding: 12px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 8px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        table, th, td {
-            border: none;
-        }
-
-        th {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 16px;
-            font-weight: 600;
-            text-align: left;
-        }
-
-        td {
-            padding: 16px;
-            text-align: left;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        tr:nth-child(even) {
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        tr:hover {
-            background: rgba(102, 126, 234, 0.1);
-            transition: background 0.3s ease;
-        }
-
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-            
-            header {
-                padding: 15px 20px;
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .section h2 {
-                font-size: 24px;
-            }
-            
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .announcement-banner {
-                height: 50px;
-            }
-
-            .banner-content {
-                padding-left: 60px;
-            }
-
-            .banner-item {
-                font-size: 14px;
-            }
-        }
-
-        /* Floating particles animation */
+        /* Floating Particles */
         .particle {
             position: fixed;
-            width: 4px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.5);
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.6);
             border-radius: 50%;
             pointer-events: none;
-            animation: float 6s infinite linear;
+            animation: float 8s infinite linear;
             z-index: -1;
         }
 
@@ -484,42 +529,166 @@ $stmt->close();
                 opacity: 0;
             }
         }
-    </style>
-    <script>
-        // Add floating particles
-        function createParticle() {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + 'vw';
-            particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
-            particle.style.animationDelay = Math.random() * 2 + 's';
-            document.body.appendChild(particle);
-            
-            setTimeout(() => {
-                particle.remove();
-            }, 8000);
+
+        /* Animations */
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        // Create particles periodically
-        setInterval(createParticle, 300);
-    </script>
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .profile-sidebar {
+                width: 100%;
+                padding: 20px;
+            }
+
+            .profile-toggle {
+                top: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .main-content.with-sidebar {
+                padding-right: 0;
+            }
+
+            .container {
+                padding: 30px 20px;
+            }
+            
+            header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            header h1 {
+                font-size: 24px;
+            }
+            
+            .section h2 {
+                font-size: 28px;
+            }
+            
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .announcement-banner {
+                height: 60px;
+            }
+
+            .banner-content {
+                padding-left: 80px;
+            }
+
+            .banner-item {
+                font-size: 14px;
+                margin-right: 80px;
+            }
+
+            .card {
+                padding: 25px;
+            }
+        }
+    </style>
 </head>
-<script>
-<script>
-if (performance.navigation.type === 2) {
-    // Force redirect if the user is navigating with the back button
-    location.href = "logout.php";
-}
-</script>
-
-</script>
-
 <body>
 
+<!-- Profile Toggle Button -->
+<div class="profile-toggle" onclick="toggleProfile()">
+    <i class="fas fa-user"></i>
+</div>
+
+<!-- Profile Sidebar -->
+<div class="profile-sidebar" id="profileSidebar">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <i class="fas fa-user-graduate"></i>
+        </div>
+        <div class="profile-info">
+            <h3><?= htmlspecialchars($student['name']) ?></h3>
+            <p><i class="fas fa-id-badge"></i> <?= htmlspecialchars($student['roll_number']) ?></p>
+            <p><i class="fas fa-building"></i> <?= htmlspecialchars($student['department']) ?></p>
+            <?php if (!empty($student['phone'])): ?>
+            <p><i class="fas fa-phone"></i> <?= htmlspecialchars($student['phone']) ?></p>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="profile-stats">
+        <div class="stat-item">
+            <div class="stat-number"><?= $events_joined ?></div>
+            <div class="stat-label">Events Joined</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number"><?= $certificates ?></div>
+            <div class="stat-label">Certificates</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number"><?= $attendance_percentage ?>%</div>
+            <div class="stat-label">Attendance</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number"><?= $notifications_count ?></div>
+            <div class="stat-label">New Updates</div>
+        </div>
+    </div>
+
+    <div class="profile-actions">
+        <a href="profile_edit.php" class="profile-btn">
+            <i class="fas fa-edit"></i>
+            Edit Profile
+        </a>
+        <a href="student_certificates.php" class="profile-btn">
+            <i class="fas fa-certificate"></i>
+            My Certificates
+        </a>
+        <a href="student_notifications.php" class="profile-btn">
+            <i class="fas fa-bell"></i>
+            Notifications
+        </a>
+        <a href="student_settings.php" class="profile-btn">
+            <i class="fas fa-cog"></i>
+            Settings
+        </a>
+    </div>
+</div>
+
+<div class="main-content" id="mainContent">
+
 <header>
-    <h1>Welcome, <?= htmlspecialchars($student['name']) ?> (<?= htmlspecialchars($student['roll_number']) ?>)</h1>
+    <h1>Welcome, <?= htmlspecialchars($student['name']) ?></h1>
     <div class="logout">
-        <a href="logout.php">Logout</a>
+        <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 </header>
 
@@ -544,52 +713,102 @@ if (performance.navigation.type === 2) {
 
 <div class="container">
 
-    <!-- 📦 Original Dashboard Cards -->
+    <!-- Quick Access Cards -->
     <div class="section">
         <h2>🎯 Quick Access</h2>
         <div class="card-grid">
-            <div class="card">
-                <a href="events_student.php" style="text-decoration: none; color: inherit;">
-                <h3>🎉 My Events</h3>
+            <a href="events_student.php" class="card">
+                <h3><i class="fas fa-calendar-alt"></i> My Events</h3>
                 <p>View upcoming and registered events.</p>
-            </div></a>
+            </a>
 
-            <div class="card">
-                <a href="student_participation_history.php" style="text-decoration: none; color: inherit;">
-                <h3>✅ My Participation</h3>
+            <a href="student_participation_history.php" class="card">
+                <h3><i class="fas fa-history"></i> My Participation</h3>
                 <p>Track your event history and approvals.</p>
-            </div></a>
+            </a>
 
             <div class="card">
-                <h3>📝 Submit Feedback</h3>
+                <h3><i class="fas fa-comment-alt"></i> Submit Feedback</h3>
                 <p>Share suggestions or report issues.</p>
             </div>
 
             <div class="card">
-                <h3>📚 Resources</h3>
+                <h3><i class="fas fa-book-open"></i> Resources</h3>
                 <p>Access club materials and past content.</p>
             </div>
-             <div class="card">
-                <a href="student_attendance.php" style="text-decoration: none; color: inherit;">
-                <h3>✅ Attendance</h3>
-                <p>View the attendance.</p>
-            </div></a>
-            <div class="card">
-                <a href="view_media_gallery.php" style="text-decoration: none; color: inherit;">
-                <h3>✅ Gallery</h3>
-                <p>View the gallery.</p>
-            </div></a>
             
-            <div class="card">
-                <a href=" student_buy_merchandise.php" style="text-decoration: none; color: inherit;">
-                <h3>✅ Mdc Products</h3>
-                <p>To buy Mdc products for further programs.</p>
-            </div></a>
+            <a href="student_attendance.php" class="card">
+                <h3><i class="fas fa-user-check"></i> Attendance</h3>
+                <p>View the attendance.</p>
+            </a>
+            
+            <a href="view_media_gallery.php" class="card">
+                <h3><i class="fas fa-images"></i> Gallery</h3>
+                <p>View the gallery.</p>
+            </a>
+            
+            <a href="student_buy_merchandise.php" class="card">
+                <h3><i class="fas fa-shopping-cart"></i> MDC Products</h3>
+                <p>To buy MDC products for further programs.</p>
+            </a>
 
         </div>
     </div>
 
 </div>
+
+</div>
+
+<script>
+// Profile sidebar toggle
+function toggleProfile() {
+    const sidebar = document.getElementById('profileSidebar');
+    const mainContent = document.getElementById('mainContent');
+    const isOpen = sidebar.classList.contains('open');
+    
+    if (isOpen) {
+        sidebar.classList.remove('open');
+        mainContent.classList.remove('with-sidebar');
+    } else {
+        sidebar.classList.add('open');
+        mainContent.classList.add('with-sidebar');
+    }
+}
+
+// Close sidebar when clicking outside
+document.addEventListener('click', function(event) {
+    const sidebar = document.getElementById('profileSidebar');
+    const toggle = document.querySelector('.profile-toggle');
+    const mainContent = document.getElementById('mainContent');
+    
+    if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+        sidebar.classList.remove('open');
+        mainContent.classList.remove('with-sidebar');
+    }
+});
+
+// Add floating particles
+function createParticle() {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + 'vw';
+    particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+    particle.style.animationDelay = Math.random() * 2 + 's';
+    document.body.appendChild(particle);
+    
+    setTimeout(() => {
+        particle.remove();
+    }, 10000);
+}
+
+// Create particles periodically
+setInterval(createParticle, 400);
+
+// Back button protection
+if (performance.navigation.type === 2) {
+    location.href = "logout.php";
+}
+</script>
 
 </body>
 </html>

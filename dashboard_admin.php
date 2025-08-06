@@ -44,7 +44,6 @@ if (isset($_POST["add_admin"])) {
     }
 }
 ?>
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,50 +52,32 @@ if (isset($_POST["add_admin"])) {
     <title>Admin Dashboard – MDC Club</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #4a6741 100%);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --text-primary: #2c3e50;
-            --text-secondary: #6c757d;
-            --text-light: #95a5a6;
-            --shadow-light: 0 8px 32px rgba(0, 0, 0, 0.1);
-            --shadow-medium: 0 12px 40px rgba(0, 0, 0, 0.15);
-            --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.2);
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --danger: #ef4444;
+            --glass: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.2);
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
             min-height: 100vh;
-            color: var(--text-primary);
-            position: relative;
-            overflow-x: hidden;
+            color: white;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            pointer-events: none;
-            z-index: 1;
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
+        /* Floating Elements */
         .floating-shapes {
             position: fixed;
             top: 0;
@@ -104,83 +85,49 @@ if (isset($_POST["add_admin"])) {
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 2;
+            z-index: 1;
         }
 
         .shape {
             position: absolute;
-            background: var(--glass-bg);
+            background: var(--glass);
             backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--border);
             border-radius: 50%;
             animation: float 20s infinite ease-in-out;
         }
 
-        .shape:nth-child(1) {
-            width: 80px;
-            height: 80px;
-            top: 10%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .shape:nth-child(2) {
-            width: 120px;
-            height: 120px;
-            top: 60%;
-            right: 15%;
-            animation-delay: -5s;
-        }
-
-        .shape:nth-child(3) {
-            width: 60px;
-            height: 60px;
-            bottom: 20%;
-            left: 20%;
-            animation-delay: -10s;
-        }
+        .shape:nth-child(1) { width: 100px; height: 100px; top: 10%; left: 10%; }
+        .shape:nth-child(2) { width: 150px; height: 150px; top: 60%; right: 15%; animation-delay: -5s; }
+        .shape:nth-child(3) { width: 80px; height: 80px; bottom: 20%; left: 20%; animation-delay: -10s; }
 
         @keyframes float {
             0%, 100% { transform: translateY(0px) rotate(0deg); }
-            33% { transform: translateY(-20px) rotate(120deg); }
-            66% { transform: translateY(10px) rotate(240deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
         }
 
+        /* Sidebar */
         .sidebar {
-            width: 300px;
+            width: 280px;
             height: 100vh;
             position: fixed;
             left: 0;
             top: 0;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--glass);
             backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            border-right: 1px solid var(--border);
             z-index: 1000;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        .sidebar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-            z-index: -1;
+            overflow-y: auto;
         }
 
         .sidebar-header {
-            padding: 40px 30px;
+            padding: 30px;
             text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--border);
         }
 
         .sidebar-header h2 {
-            color: white;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 800;
             margin-bottom: 8px;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -189,31 +136,30 @@ if (isset($_POST["add_admin"])) {
         .sidebar-header p {
             color: rgba(255, 255, 255, 0.7);
             font-size: 14px;
-            font-weight: 500;
         }
 
-        .nav-menu {
-            padding: 20px 0;
-        }
+        .nav-menu { padding: 20px 0; }
 
         .nav-item {
             display: flex;
             align-items: center;
-            padding: 18px 30px;
+            padding: 15px 25px;
             color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
             transition: all 0.3s ease;
-            position: relative;
             margin: 2px 15px;
             border-radius: 12px;
+            position: relative;
         }
 
-        .nav-item i {
-            width: 20px;
-            margin-right: 15px;
-            font-size: 18px;
+        .nav-item i { width: 20px; margin-right: 15px; }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateX(5px);
         }
 
         .nav-item::before {
@@ -222,29 +168,13 @@ if (isset($_POST["add_admin"])) {
             left: 0;
             top: 0;
             bottom: 0;
-            width: 4px;
-            background: var(--success-gradient);
-            border-radius: 0 4px 4px 0;
+            width: 3px;
+            background: var(--primary);
             transform: scaleY(0);
             transition: transform 0.3s ease;
         }
 
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            transform: translateX(5px);
-        }
-
-        .nav-item:hover::before {
-            transform: scaleY(1);
-        }
-
-        .nav-item.active {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-        }
-
-        .nav-item.active::before {
+        .nav-item:hover::before, .nav-item.active::before {
             transform: scaleY(1);
         }
 
@@ -260,27 +190,26 @@ if (isset($_POST["add_admin"])) {
             align-items: center;
             justify-content: center;
             padding: 15px 20px;
-            background: var(--danger-gradient);
+            background: linear-gradient(135deg, var(--danger), #dc2626);
             color: white;
             text-decoration: none;
             border-radius: 12px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: var(--shadow-light);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .logout-btn:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-medium);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
-        .logout-btn i {
-            margin-right: 10px;
-        }
+        .logout-btn i { margin-right: 10px; }
 
+        /* Main Content */
         .main-content {
-            margin-left: 300px;
-            padding: 40px 50px;
+            margin-left: 280px;
+            padding: 40px;
             min-height: 100vh;
             position: relative;
             z-index: 10;
@@ -291,18 +220,17 @@ if (isset($_POST["add_admin"])) {
             justify-content: space-between;
             align-items: center;
             margin-bottom: 40px;
-            padding: 25px 35px;
-            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            background: var(--glass);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border);
             border-radius: 20px;
-            box-shadow: var(--shadow-light);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
         }
 
         .welcome-section h1 {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 800;
-            color: white;
             margin-bottom: 8px;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
@@ -310,7 +238,6 @@ if (isset($_POST["add_admin"])) {
         .welcome-section p {
             color: rgba(255, 255, 255, 0.8);
             font-size: 16px;
-            font-weight: 500;
         }
 
         .user-info {
@@ -322,19 +249,16 @@ if (isset($_POST["add_admin"])) {
         .user-avatar {
             width: 50px;
             height: 50px;
-            background: var(--success-gradient);
+            background: linear-gradient(135deg, var(--success), var(--primary));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
             font-size: 20px;
-            font-weight: bold;
-            box-shadow: var(--shadow-light);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .user-details h3 {
-            color: white;
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 2px;
@@ -345,24 +269,27 @@ if (isset($_POST["add_admin"])) {
             font-size: 14px;
         }
 
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 25px;
-            margin-bottom: 50px;
+            margin-bottom: 40px;
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.15);
+            background: var(--glass);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border);
             padding: 30px;
             border-radius: 20px;
             text-align: center;
-            transition: all 0.4s ease;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            box-shadow: var(--shadow-light);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            color: inherit;
         }
 
         .stat-card::before {
@@ -372,43 +299,30 @@ if (isset($_POST["add_admin"])) {
             left: 0;
             right: 0;
             height: 4px;
-            background: var(--success-gradient);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
             transform: scaleX(0);
             transition: transform 0.3s ease;
         }
 
         .stat-card:hover {
             transform: translateY(-10px);
-            box-shadow: var(--shadow-heavy);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
         }
 
         .stat-card:hover::before {
             transform: scaleX(1);
         }
 
-        .stat-card:nth-child(2)::before {
-            background: var(--warning-gradient);
-        }
-
-        .stat-card:nth-child(3)::before {
-            background: var(--secondary-gradient);
-        }
-
-        .stat-card:nth-child(4)::before {
-            background: var(--danger-gradient);
-        }
-
         .stat-icon {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
             margin: 0 auto 20px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 30px;
-            color: white;
+            font-size: 24px;
             transition: all 0.3s ease;
         }
 
@@ -418,8 +332,7 @@ if (isset($_POST["add_admin"])) {
         }
 
         .stat-card h3 {
-            color: white;
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 700;
             margin-bottom: 10px;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -427,53 +340,40 @@ if (isset($_POST["add_admin"])) {
 
         .stat-card p {
             color: rgba(255, 255, 255, 0.8);
-            font-size: 15px;
-            line-height: 1.6;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
+        /* Form Container */
         .admin-form-container {
-            background: rgba(255, 255, 255, 0.15);
+            background: var(--glass);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 50px;
+            border: 1px solid var(--border);
+            padding: 40px;
             border-radius: 25px;
-            box-shadow: var(--shadow-medium);
-            max-width: 600px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .admin-form-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: var(--primary-gradient);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .form-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .form-header h2 {
-            color: white;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 800;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .form-header p {
             color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
         }
 
         .form-group {
-            margin-bottom: 25px;
-            position: relative;
+            margin-bottom: 20px;
         }
 
         .form-group label {
@@ -482,19 +382,16 @@ if (isset($_POST["add_admin"])) {
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .form-group input {
             width: 100%;
-            padding: 18px 25px;
+            padding: 15px 20px;
             background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
             color: white;
             font-size: 16px;
-            font-weight: 500;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
         }
@@ -505,102 +402,62 @@ if (isset($_POST["add_admin"])) {
 
         .form-group input:focus {
             outline: none;
-            border-color: rgba(255, 255, 255, 0.5);
+            border-color: var(--primary);
             background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         .submit-btn {
             width: 100%;
-            padding: 20px;
-            background: var(--primary-gradient);
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
             border: none;
-            border-radius: 15px;
-            font-size: 18px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: var(--shadow-light);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .submit-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.6s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .submit-btn:hover {
             transform: translateY(-3px);
-            box-shadow: var(--shadow-heavy);
-        }
-
-        .submit-btn:hover::before {
-            left: 100%;
-        }
-
-        .submit-btn:active {
-            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
         .status-message {
-            margin-top: 25px;
-            padding: 20px 25px;
+            margin-top: 20px;
+            padding: 15px 20px;
             border-radius: 12px;
             font-weight: 600;
-            font-size: 15px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .status-message.success {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4caf50;
-            border-color: rgba(76, 175, 80, 0.3);
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .status-message.warning {
-            background: rgba(244, 67, 54, 0.2);
-            color: #f44336;
-            border-color: rgba(244, 67, 54, 0.3);
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .status-message i {
-            font-size: 18px;
-        }
-
-        /* Mobile Responsiveness */
-        @media (max-width: 1024px) {
-            .sidebar {
-                width: 260px;
-            }
-            
-            .main-content {
-                margin-left: 260px;
-                padding: 30px 35px;
-            }
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
                 height: auto;
                 position: relative;
-                border-right: none;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             }
             
             .main-content {
@@ -619,12 +476,21 @@ if (isset($_POST["add_admin"])) {
             }
             
             .admin-form-container {
-                padding: 30px 25px;
+                padding: 30px 20px;
             }
         }
 
         /* Animations */
-        @keyframes slideInUp {
+        .stat-card {
+            animation: slideUp 0.6s ease forwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes slideUp {
             from {
                 opacity: 0;
                 transform: translateY(50px);
@@ -633,67 +499,6 @@ if (isset($_POST["add_admin"])) {
                 opacity: 1;
                 transform: translateY(0);
             }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        .stat-card {
-            animation: slideInUp 0.6s ease forwards;
-        }
-
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-
-        .admin-form-container {
-            animation: slideInUp 0.8s ease forwards;
-            animation-delay: 0.5s;
-        }
-
-        .sidebar {
-            animation: slideInLeft 0.6s ease forwards;
-        }
-
-        .top-bar {
-            animation: fadeIn 0.8s ease forwards;
-        }
-
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
         }
     </style>
 </head>
@@ -775,102 +580,84 @@ if (isset($_POST["add_admin"])) {
         </div>
          <div class="stats-grid">
     <!-- 1. New Event -->
-    <a href="create_event.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-calendar-plus"></i>
-            </div>
-            <h3>New Event</h3>
-            <p>Create and schedule upcoming events for your club members</p>
+    <a href="create_event.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-calendar-plus"></i>
         </div>
+        <h3>New Event</h3>
+        <p>Create and schedule upcoming events for your club members</p>
     </a>
 
     <!-- 2. Manage Events -->
-    <a href="manage_events.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-calendar-minus"></i>
-            </div>
-            <h3>Manage events</h3>
-            <p>edit,delete and update events</p>
+    <a href="manage_events.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-calendar-minus"></i>
         </div>
+        <h3>Manage events</h3>
+        <p>edit,delete and update events</p>
     </a>
 
     <!-- 3. Registrations -->
-    <a href="view_event_registrations.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <h3>Registrations</h3>
-            <p>View and manage student registrations and participation</p>
+    <a href="view_event_registrations.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
         </div>
+        <h3>Registrations</h3>
+        <p>View and manage student registrations and participation</p>
     </a>
 
     <!-- 4. Announcements -->
-    <a href="admin_post_announcement.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-bullhorn"></i>
-            </div>
-            <h3>Announcements</h3>
-            <p>Post important updates for students and faculty</p><br>
+    <a href="admin_post_announcement.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-bullhorn"></i>
         </div>
+        <h3>Announcements</h3>
+        <p>Post important updates for students and faculty</p><br>
     </a>
 
     <!-- 5. Media -->
-    <a href="admin_media_upload.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-image"></i>
-            </div>
-            <h3>Media</h3>
-            <p>Upload media of program history</p><br>
+    <a href="admin_media_upload.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-image"></i>
         </div>
+        <h3>Media</h3>
+        <p>Upload media of program history</p><br>
     </a>
 
     <!-- 6. Merchandise -->
-    <a href="admin_manage_merchandise.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-tshirt"></i>
-            </div>
-            <h3>Merchandise</h3>
-            <p>Manage and update T-shirts, hoodies, and other items</p>
+    <a href="admin_manage_merchandise.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-tshirt"></i>
         </div>
+        <h3>Merchandise</h3>
+        <p>Manage and update T-shirts, hoodies, and other items</p>
     </a>
 
     <!-- 7. Orders -->
-    <a href="admin_view_orders.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-eye"></i>
-            </div>
-            <h3>Orders</h3>
-            <p>to view the orders by the students for mdc products</p><br>
+    <a href="admin_view_orders.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-eye"></i>
         </div>
+        <h3>Orders</h3>
+        <p>to view the orders by the students for mdc products</p><br>
     </a>
 
     <!-- 8. Reports -->
-    <a href="report.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-file-alt"></i>
-            </div>
-            <h3>Reports</h3>
-            <p>Submit reports on club activities</p>
+    <a href="report.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-file-alt"></i>
         </div>
+        <h3>Reports</h3>
+        <p>Submit reports on club activities</p>
     </a>
 
     <!-- 9. View Status of Reports -->
-    <a href="admin_view_report_status.php" style="text-decoration: none; color: inherit;">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="fas fa-eye"></i>
-            </div>
-            <h3>View status of reports</h3>
-            <p>to view the reports are approved or rejected by the faculty</p><br>
+    <a href="admin_view_report_status.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-eye"></i>
         </div>
+        <h3>View status of reports</h3>
+        <p>to view the reports are approved or rejected by the faculty</p><br>
     </a>
 </div>
 
