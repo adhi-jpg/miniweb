@@ -6,12 +6,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
     header("Location: login.php");
     exit();
 }
-// Get event participations with student info
+// Get event participations with student info and event title
 $query = "
     SELECT ep.participation_id, ep.event_id, ep.user_id, ep.status,
-           sp.name AS student_name, sp.roll_number
+           sp.name AS student_name, sp.roll_number,
+           e.title AS event_title
     FROM event_participation ep
     JOIN student_profiles sp ON ep.user_id = sp.user_id
+    JOIN events e ON ep.event_id = e.event_id
     ORDER BY ep.participation_id DESC
 ";
 $result = $conn->query($query);
@@ -38,27 +40,29 @@ if ($result && $result->num_rows > 0) {
     <style>
         body {
             font-family: "Segoe UI", Arial, sans-serif;
-            background: #f5f7fa;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
             margin: 0;
             padding: 0;
+            min-height: 100vh;
         }
         .container {
             max-width: 1100px;
             margin: 38px auto 0 auto;
-            background: #fff;
+            background: linear-gradient(145deg, #1c1c1c 0%, #242424 100%);
             border-radius: 16px;
-            box-shadow: 0 4px 32px rgba(44,63,156,0.09);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,55,0.1);
             padding: 38px 4vw 25px 4vw;
         }
         .page-header h1 {
             font-size: 2.15rem;
             margin-bottom: 7px;
-            color: #28286b;
+            color: #d4af37;
             font-weight: 800;
             letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(212,175,55,0.3);
         }
         .page-header .subtitle {
-            color: #5e6392;
+            color: #b8b8b8;
             font-size: 1.06rem;
             margin-bottom: 14px;
         }
@@ -70,13 +74,14 @@ if ($result && $result->num_rows > 0) {
         }
         .stat-card {
             min-width: 155px;
-            background: #f7faff;
+            background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
             border-radius: 13px;
             padding: 19px 24px 17px 18px;
             text-align: center;
+            border: 1px solid rgba(212,175,55,0.15);
         }
         .stat-label {
-            color: #7e8ba2;
+            color: #888;
             font-size: .9rem;
             margin-bottom: 6px;
             text-transform: uppercase;
@@ -85,12 +90,13 @@ if ($result && $result->num_rows > 0) {
         .stat-number {
             font-size: 2rem;
             font-weight: 900;
-            color: #2c335d;
+            color: #d4af37;
             margin-bottom: 3px;
+            text-shadow: 0 2px 4px rgba(212,175,55,0.2);
         }
-        .stat-card.confirmed .stat-number { color: #19995b;}
-        .stat-card.pending .stat-number { color: #e6a14d;}
-        .stat-card.total .stat-number { color: #3b50bb;}
+        .stat-card.confirmed .stat-number { color: #ffd700;}
+        .stat-card.pending .stat-number { color: #daa520;}
+        .stat-card.total .stat-number { color: #d4af37;}
         .controls-bar {
             margin-bottom: 28px;
             display: flex;
@@ -108,63 +114,74 @@ if ($result && $result->num_rows > 0) {
             font-size: 16px;
             padding: 11px 40px 11px 16px;
             border-radius: 30px;
-            border: 1.5px solid #dedede;
-            background: #fff;
+            border: 1.5px solid #444;
+            background: #2a2a2a;
+            color: #d4af37;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
         }
         .search-box input:focus {
-            border-color: #4188f7;
+            border-color: #d4af37;
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
+        }
+        .search-box input::placeholder {
+            color: #888;
         }
         .search-box i {
             position: absolute;
             right: 15px; top: 50%;
             transform: translateY(-50%);
-            color: #8796ab;
+            color: #d4af37;
             font-size: 1.14rem;
         }
         .filter-box select {
             padding: 10px 22px;
             border-radius: 22px;
             font-size: 15px;
-            border: 1.5px solid #dedede;
-            background: #fff;
+            border: 1.5px solid #444;
+            background: #2a2a2a;
+            color: #d4af37;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
         }
         .filter-box select:focus {
-            border-color: #4188f7;
+            border-color: #d4af37;
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
         }
         .table-container {
-            background: #fff;
+            background: linear-gradient(145deg, #1f1f1f 0%, #242424 100%);
             border-radius: 10px;
-            box-shadow: 0 2px 16px rgba(44, 46, 156, 0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            border: 1px solid rgba(212,175,55,0.1);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background: #fff;
+            background: transparent;
         }
         thead tr {
-            background: #f2f6fc;
+            background: linear-gradient(145deg, #333 0%, #2a2a2a 100%);
         }
         th, td {
             padding: 15px 7px;
             font-size: 1rem;
             text-align: left;
+            color: #e0e0e0;
         }
         th {
             text-transform: uppercase;
             letter-spacing: .04em;
             font-weight: 700;
-            color: #42536c;
+            color: #d4af37;
+            text-shadow: 0 1px 2px rgba(212,175,55,0.2);
         }
         tbody tr {
-            border-bottom: 1px solid #eef0f6;
-            transition: background 0.16s;
+            border-bottom: 1px solid rgba(212,175,55,0.1);
+            transition: all 0.3s ease;
         }
         tbody tr:hover {
-            background: #eaf3fc;
+            background: rgba(212,175,55,0.05);
+            box-shadow: inset 0 0 0 1px rgba(212,175,55,0.1);
         }
         .status-badge {
             border-radius: 13px;
@@ -175,24 +192,24 @@ if ($result && $result->num_rows > 0) {
             display: inline-block;
         }
         .status-badge.confirmed {
-            background: #e4f8ef;
-            color: #13723c;
-            border: 1.1px solid #60daab;
+            background: linear-gradient(145deg, #1a4a1a 0%, #2d5a2d 100%);
+            color: #ffd700;
+            border: 1.1px solid #d4af37;
         }
         .status-badge.pending {
-            background: #fff5e0;
-            color: #ad650d;
-            border: 1.05px solid #ffe6b4;
+            background: linear-gradient(145deg, #4a3a1a 0%, #5a4a2d 100%);
+            color: #daa520;
+            border: 1.05px solid #b8860b;
         }
         .no-results {
             text-align: center;
             padding: 65px 12px;
-            color: #a0aac3;
+            color: #888;
         }
         .no-results i {
             font-size: 2.4rem;
             margin-bottom: 13px;
-            color: #e0e0ed;
+            color: #444;
         }
         @media (max-width: 760px) {
             .container { padding:20px 2vw 10px 2vw;}
@@ -246,6 +263,7 @@ if ($result && $result->num_rows > 0) {
                 <tr>
                     <th>Participation ID</th>
                     <th>Event ID</th>
+                    <th>Event Title</th>
                     <th>Student Name</th>
                     <th>Roll Number</th>
                     <th>Status</th>
@@ -256,6 +274,7 @@ if ($result && $result->num_rows > 0) {
                 <tr class="participation-row" data-status="<?= htmlspecialchars($row['status']) ?>">
                     <td><?= htmlspecialchars($row['participation_id']) ?></td>
                     <td><?= htmlspecialchars($row['event_id']) ?></td>
+                    <td class="event-title"><?= htmlspecialchars($row['event_title']) ?></td>
                     <td class="student-name"><?= htmlspecialchars($row['student_name']) ?></td>
                     <td class="roll-number"><?= htmlspecialchars($row['roll_number']) ?></td>
                     <td>
@@ -297,8 +316,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = row.querySelector('.student-name').textContent.toLowerCase();
             const roll = row.querySelector('.roll-number').textContent.toLowerCase();
             const eventid = row.children[1].textContent.toLowerCase();
+            const eventtitle = row.querySelector('.event-title').textContent.toLowerCase();
             const status = row.dataset.status.toLowerCase();
-            const matchesSearch = !searchTerm || name.includes(searchTerm) || roll.includes(searchTerm) || eventid.includes(searchTerm);
+            const matchesSearch = !searchTerm || name.includes(searchTerm) || roll.includes(searchTerm) || eventid.includes(searchTerm) || eventtitle.includes(searchTerm);
             const matchesStatus = !statusValue || status === statusValue;
             if (matchesSearch && matchesStatus) {
                 row.style.display = '';

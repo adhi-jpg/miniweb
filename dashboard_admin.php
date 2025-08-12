@@ -651,6 +651,14 @@ if (isset($_POST["add_admin"])) {
         <p>Submit reports on club activities</p>
     </a>
 
+    <a href="admin_event_proposal.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <h3>event proposal</h3>
+        <p>proposal for creating event to faculty</p>
+    </a>
+
     <!-- 9. View Status of Reports -->
     <a href="admin_view_report_status.php" class="stat-card">
         <div class="stat-icon">

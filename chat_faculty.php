@@ -19,7 +19,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -33,9 +33,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             height: 90vh;
             width: 100%;
             max-width: 800px;
-            background: #ffffff;
+            background: linear-gradient(145deg, #1c1c1c 0%, #242424 100%);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(144,238,144,0.1);
             overflow: hidden;
             animation: slideIn 0.5s ease-out;
         }
@@ -46,8 +46,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         }
         
         .chat-header {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
+            background: linear-gradient(135deg, #90ee90 0%, #7dd87d 100%);
+            color: #1a1a1a;
             padding: 20px 25px;
             display: flex;
             align-items: center;
@@ -63,13 +63,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         .faculty-avatar {
             width: 45px;
             height: 45px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(0, 0, 0, 0.1);
         }
         
         .header-info h3 {
@@ -80,7 +80,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         
         .status {
             font-size: 12px;
-            opacity: 0.9;
+            opacity: 0.8;
             display: flex;
             align-items: center;
             gap: 5px;
@@ -89,7 +89,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         .status-dot {
             width: 6px;
             height: 6px;
-            background: #fff;
+            background: #1a1a1a;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
@@ -104,10 +104,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         .header-btn {
             width: 40px;
             height: 40px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.15);
             border: none;
             border-radius: 50%;
-            color: white;
+            color: #1a1a1a;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -117,7 +117,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         }
         
         .header-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.25);
             transform: scale(1.1);
         }
         
@@ -125,13 +125,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             position: absolute;
             top: 100%;
             right: 0;
-            background: white;
+            background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
             border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             padding: 10px 0;
             min-width: 180px;
             z-index: 100;
             display: none;
+            border: 1px solid rgba(144,238,144,0.2);
         }
         
         .dropdown-item {
@@ -140,23 +141,23 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             display: flex;
             align-items: center;
             gap: 10px;
-            color: #333;
+            color: #e0e0e0;
             text-decoration: none;
             transition: background 0.2s;
         }
         
-        .dropdown-item:hover { background-color: #f5f5f5; }
+        .dropdown-item:hover { background: rgba(144,238,144,0.1); }
         
         #chat-box {
             flex: 1;
             padding: 25px;
             overflow-y: auto;
-            background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+            background: linear-gradient(to bottom, #1a1a1a, #0f0f0f);
         }
         
         #chat-box::-webkit-scrollbar { width: 6px; }
-        #chat-box::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        #chat-box::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+        #chat-box::-webkit-scrollbar-track { background: #333; border-radius: 10px; }
+        #chat-box::-webkit-scrollbar-thumb { background: #90ee90; border-radius: 10px; }
         
         .message {
             max-width: 65%;
@@ -168,7 +169,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             position: relative;
             word-wrap: break-word;
             animation: messageSlide 0.3s ease-out;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         
         @keyframes messageSlide {
@@ -177,17 +178,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         }
         
         .sent {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
+            background: linear-gradient(135deg, #90ee90, #7dd87d);
+            color: #1a1a1a;
             margin-left: auto;
             border-bottom-right-radius: 5px;
         }
         
         .received {
-            background: white;
-            color: #333;
+            background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
+            color: #e0e0e0;
             margin-right: auto;
-            border: 1px solid #e0e0e0;
+            border: 1px solid rgba(144,238,144,0.2);
             border-bottom-left-radius: 5px;
         }
         
@@ -201,8 +202,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         .chat-footer {
             display: flex;
             padding: 20px 25px;
-            background: #ffffff;
-            border-top: 1px solid #e0e0e0;
+            background: linear-gradient(145deg, #242424 0%, #1c1c1c 100%);
+            border-top: 1px solid rgba(144,238,144,0.2);
             gap: 15px;
             align-items: center;
         }
@@ -213,26 +214,29 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             width: 100%;
             padding: 15px 20px;
             border-radius: 25px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #444;
             font-size: 14px;
             outline: none;
             transition: all 0.3s ease;
-            background: #f8f9fa;
+            background: #2a2a2a;
+            color: #e0e0e0;
             resize: none;
             min-height: 50px;
             max-height: 100px;
         }
         
         #message:focus {
-            border-color: #4CAF50;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+            border-color: #90ee90;
+            background: #333;
+            box-shadow: 0 0 0 3px rgba(144, 238, 144, 0.15);
         }
         
+        #message::placeholder { color: #888; }
+        
         #sendBtn {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
+            background: linear-gradient(135deg, #90ee90, #7dd87d);
             border: none;
-            color: white;
+            color: #1a1a1a;
             width: 55px;
             height: 55px;
             border-radius: 50%;
@@ -246,7 +250,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
         
         #sendBtn:hover {
             transform: scale(1.1);
-            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+            box-shadow: 0 5px 20px rgba(144, 238, 144, 0.4);
         }
         
         .emoji-btn {
@@ -261,21 +265,23 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
+            color: #90ee90;
         }
         
-        .emoji-btn:hover { background: rgba(76, 175, 80, 0.1); }
+        .emoji-btn:hover { background: rgba(144, 238, 144, 0.15); }
         
         .emoji-picker {
             position: absolute;
             bottom: 70px;
             right: 80px;
-            background: white;
+            background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
             border-radius: 15px;
             padding: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             z-index: 100;
             width: 280px;
             display: none;
+            border: 1px solid rgba(144,238,144,0.2);
         }
         
         .emoji-grid {
@@ -293,7 +299,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             transition: background 0.2s;
         }
         
-        .emoji-item:hover { background: #f0f0f0; }
+        .emoji-item:hover { background: rgba(144,238,144,0.2); }
         
         .modal {
             display: none;
@@ -303,22 +309,23 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.8);
         }
         
         .modal-content {
-            background-color: #fff;
+            background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
             margin: 10% auto;
             padding: 20px;
             border-radius: 15px;
             width: 90%;
             max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(144,238,144,0.2);
         }
         
         .modal h3 {
             margin-bottom: 20px;
-            color: #4CAF50;
+            color: #90ee90;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -329,31 +336,32 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             font-size: 24px;
             font-weight: bold;
             cursor: pointer;
-            color: #999;
+            color: #888;
             margin-top: -10px;
         }
         
-        .close:hover { color: #333; }
+        .close:hover { color: #90ee90; }
         
         .setting-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #444;
+            color: #e0e0e0;
         }
         
         .toggle {
             width: 40px;
             height: 20px;
-            background: #ccc;
+            background: #555;
             border-radius: 20px;
             position: relative;
             cursor: pointer;
             transition: background 0.3s;
         }
         
-        .toggle.active { background: #4CAF50; }
+        .toggle.active { background: #90ee90; }
         
         .toggle-slider {
             width: 16px;
@@ -384,9 +392,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'faculty') {
             to { transform: translateX(0); opacity: 1; }
         }
         
-        .notification.success { background: #4CAF50; }
-        .notification.error { background: #f44336; }
-        .notification.info { background: #2196f3; }
+        .notification.success { background: #90ee90; color: #1a1a1a; }
+        .notification.error { background: #ff6b6b; }
+        .notification.info { background: #64b5f6; }
     </style>
 </head>
 <body>

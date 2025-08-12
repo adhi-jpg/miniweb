@@ -56,19 +56,19 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #ffd700 100%); 
             min-height: 100vh; line-height: 1.6; 
         }
         
         .background-pattern {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.05; z-index: -1;
-            background-image: radial-gradient(circle at 25% 25%, #fff 2px, transparent 2px);
+            background-image: radial-gradient(circle at 25% 25%, #ffd700 2px, transparent 2px);
             background-size: 50px 50px;
         }
         
         header {
-            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 215, 0, 0.1); backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
             color: white; padding: 2rem 0; text-align: center;
         }
         
@@ -76,8 +76,9 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         header p { font-size: 1.1rem; opacity: 0.9; }
         
         .student-info {
-            background: rgba(255, 255, 255, 0.15); margin-top: 1rem; padding: 1rem 2rem;
+            background: rgba(255, 215, 0, 0.15); margin-top: 1rem; padding: 1rem 2rem;
             border-radius: 25px; display: inline-flex; align-items: center; gap: 1rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
         }
         
         .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
@@ -85,23 +86,24 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         .card {
             background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;
+            border-top: 3px solid #ffd700;
         }
-        .card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.15); transform: translateY(-2px); }
+        .card:hover { box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2); transform: translateY(-2px); }
         
         .form-card { display: flex; align-items: end; gap: 1.5rem; flex-wrap: wrap; }
         
         .form-group { display: flex; flex-direction: column; min-width: 250px; }
         .form-group label {
-            font-weight: 600; color: #2c3e50; margin-bottom: 0.5rem;
+            font-weight: 600; color: #dc2626; margin-bottom: 0.5rem;
             text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem;
         }
         
         .form-group select {
-            padding: 0.875rem 1rem; border: 2px solid #e1e8ed; border-radius: 8px;
+            padding: 0.875rem 1rem; border: 2px solid #ffd700; border-radius: 8px;
             font-size: 1rem; transition: all 0.3s ease; background: white;
         }
         .form-group select:focus {
-            outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none; border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
         
         .btn {
@@ -111,15 +113,15 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+            background: linear-gradient(135deg, #dc2626, #ffd700); color: white;
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3); }
         
         .btn-export {
-            background: white; color: #2c3e50; border: 2px solid #667eea;
+            background: white; color: #dc2626; border: 2px solid #ffd700;
             margin: 0.5rem 0.5rem 0 0; padding: 0.75rem 1.5rem;
         }
-        .btn-export:hover { background: #667eea; color: white; }
+        .btn-export:hover { background: #ffd700; color: #dc2626; }
         
         .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -133,15 +135,15 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         
         .stat-card::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, #dc2626, #ffd700);
         }
         
         .stat-number {
-            font-size: 3rem; font-weight: 700; color: #667eea; margin-bottom: 0.5rem;
+            font-size: 3rem; font-weight: 700; color: #dc2626; margin-bottom: 0.5rem;
         }
         
         .stat-label {
-            color: #2c3e50; font-weight: 600; text-transform: uppercase;
+            color: #b91c1c; font-weight: 600; text-transform: uppercase;
             letter-spacing: 0.5px; font-size: 0.9rem;
         }
         
@@ -155,11 +157,11 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         }
         
         .status-absent {
-            background: linear-gradient(135deg, #f44336, #d32f2f); color: white;
+            background: linear-gradient(135deg, #dc2626, #b91c1c); color: white;
         }
         
         .status-no-record {
-            background: linear-gradient(135deg, #ff9800, #f57c00); color: white;
+            background: linear-gradient(135deg, #ffd700, #f59e0b); color: #dc2626;
         }
         
         .percentage-display {
@@ -175,7 +177,7 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         
         .chart-container {
             max-width: 400px; margin: 2rem auto; padding: 1.5rem;
-            background: #f8fafc; border-radius: 12px;
+            background: #fffbf0; border-radius: 12px; border: 1px solid #ffd700;
         }
         
         .certificate-section {
@@ -183,18 +185,18 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         }
         
         .certificate-available {
-            background: linear-gradient(135deg, #4CAF50, #45a049); color: white;
+            background: linear-gradient(135deg, #ffd700, #f59e0b); color: #dc2626;
         }
         
         .certificate-unavailable {
-            background: linear-gradient(135deg, #f44336, #d32f2f); color: white;
+            background: linear-gradient(135deg, #dc2626, #b91c1c); color: white;
         }
         
         .certificate-btn {
-            background: rgba(255,255,255,0.2); color: white; border: 2px solid white;
+            background: rgba(220, 38, 38, 0.2); color: #dc2626; border: 2px solid #dc2626;
             padding: 1rem 2rem; margin-top: 1rem; font-size: 1.1rem;
         }
-        .certificate-btn:hover { background: white; color: #4CAF50; }
+        .certificate-btn:hover { background: #dc2626; color: white; }
         
         table {
             width: 100%; border-collapse: collapse; font-size: 0.95rem;
@@ -202,17 +204,17 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         }
         
         th {
-            background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+            background: linear-gradient(135deg, #dc2626, #ffd700); color: white;
             font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
             padding: 1.25rem 1rem; text-align: center;
         }
         
         td {
-            padding: 1rem; text-align: center; border-bottom: 1px solid #f0f4f8;
+            padding: 1rem; text-align: center; border-bottom: 1px solid #fef3c7;
             transition: all 0.3s ease;
         }
         
-        tr:hover td { background-color: #f8fafc; }
+        tr:hover td { background-color: #fffbf0; }
         
         .status-badge {
             padding: 0.25rem 0.75rem; border-radius: 20px; font-weight: 600;
@@ -220,16 +222,16 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         }
         
         .badge-present { background: #4CAF50; color: white; }
-        .badge-absent { background: #f44336; color: white; }
+        .badge-absent { background: #dc2626; color: white; }
         
         .no-data {
-            text-align: center; padding: 4rem; color: #6c757d;
+            text-align: center; padding: 4rem; color: rgba(255, 215, 0, 0.8);
         }
         .no-data i { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
         
         .progress-bar {
-            width: 100%; height: 8px; background: #e1e8ed; border-radius: 4px;
-            overflow: hidden; margin: 1rem 0;
+            width: 100%; height: 8px; background: #fef3c7; border-radius: 4px;
+            overflow: hidden; margin: 1rem 0; border: 1px solid #ffd700;
         }
         
         .progress-fill {
@@ -257,7 +259,7 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
         
         .loading {
             display: inline-block; width: 20px; height: 20px;
-            border: 2px solid #f3f3f3; border-top: 2px solid #667eea;
+            border: 2px solid #f3f3f3; border-top: 2px solid #dc2626;
             border-radius: 50%; animation: spin 1s linear infinite;
         }
         
@@ -323,11 +325,11 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
                 <div class="stat-label">Present</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: #f44336;"><?= $total_classes - $total_present ?></div>
+                <div class="stat-number" style="color: #dc2626;"><?= $total_classes - $total_present ?></div>
                 <div class="stat-label">Absent</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: <?= $percentage >= 75 ? '#4CAF50' : ($percentage >= 50 ? '#ff9800' : '#f44336') ?>;"><?= $percentage ?>%</div>
+                <div class="stat-number" style="color: <?= $percentage >= 75 ? '#ffd700' : ($percentage >= 50 ? '#f59e0b' : '#dc2626') ?>;"><?= $percentage ?>%</div>
                 <div class="stat-label">Attendance Rate</div>
             </div>
         </div>
@@ -338,10 +340,10 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
             
             <div class="percentage-display">
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: <?= $percentage ?>%; background: <?= $percentage >= 75 ? 'linear-gradient(90deg, #4CAF50, #45a049)' : ($percentage >= 50 ? 'linear-gradient(90deg, #ff9800, #f57c00)' : 'linear-gradient(90deg, #f44336, #d32f2f)') ?>;"></div>
+                    <div class="progress-fill" style="width: <?= $percentage ?>%; background: <?= $percentage >= 75 ? 'linear-gradient(90deg, #ffd700, #f59e0b)' : ($percentage >= 50 ? 'linear-gradient(90dc, #f59e0b, #dc2626)' : 'linear-gradient(90deg, #dc2626, #b91c1c)') ?>;"></div>
                 </div>
-                <p style="font-size: 1.2rem; font-weight: 600; color: #2c3e50;">
-                    Your attendance rate: <span style="color: <?= $percentage >= 75 ? '#4CAF50' : ($percentage >= 50 ? '#ff9800' : '#f44336') ?>;"><?= $percentage ?>%</span>
+                <p style="font-size: 1.2rem; font-weight: 600; color: #dc2626;">
+                    Your attendance rate: <span style="color: <?= $percentage >= 75 ? '#ffd700' : ($percentage >= 50 ? '#f59e0b' : '#dc2626') ?>;"><?= $percentage ?>%</span>
                 </p>
             </div>
 
@@ -429,7 +431,7 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
                 labels: ['Present', 'Absent'], 
                 datasets: [{ 
                     data: [<?= $total_present ?>, <?= $total_classes - $total_present ?>], 
-                    backgroundColor: ['#4CAF50', '#f44336'],
+                    backgroundColor: ['#4CAF50', '#dc2626'],
                     borderWidth: 2,
                     hoverOffset: 10
                 }] 
@@ -503,11 +505,11 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
                             <title>My Attendance History</title>
                             <style>
                                 body { font-family: Arial, sans-serif; margin: 20px; }
-                                h1 { color: #667eea; text-align: center; margin-bottom: 30px; }
+                                h1 { color: #dc2626; text-align: center; margin-bottom: 30px; }
                                 table { width: 100%; border-collapse: collapse; margin: 20px 0; }
                                 th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-                                th { background-color: #667eea; color: white; }
-                                .student-info { text-align: center; margin-bottom: 20px; padding: 15px; background: #f0f4f8; border-radius: 8px; }
+                                th { background-color: #dc2626; color: white; }
+                                .student-info { text-align: center; margin-bottom: 20px; padding: 15px; background: #fffbf0; border: 2px solid #ffd700; border-radius: 8px; }
                             </style>
                         </head>
                         <body>
@@ -546,7 +548,7 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
 
                 // Certificate Header
                 doc.setFontSize(24);
-                doc.setTextColor(102, 126, 234);
+                doc.setTextColor(220, 38, 38);
                 doc.text("ATTENDANCE CERTIFICATE", 105, 40, { align: 'center' });
                 
                 doc.setFontSize(16);
@@ -554,7 +556,7 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
                 doc.text("This is to certify that", 105, 60, { align: 'center' });
                 
                 doc.setFontSize(20);
-                doc.setTextColor(102, 126, 234);
+                doc.setTextColor(255, 215, 0);
                 doc.text("<?= $student_name ?>", 105, 80, { align: 'center' });
                 
                 doc.setFontSize(14);
@@ -564,7 +566,7 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
                 doc.text("has maintained excellent attendance with", 105, 115, { align: 'center' });
                 
                 doc.setFontSize(18);
-                doc.setTextColor(76, 175, 80);
+                doc.setTextColor(255, 215, 0);
                 doc.text("<?= $percentage ?>% Attendance Rate", 105, 135, { align: 'center' });
                 
                 doc.setFontSize(12);
@@ -574,7 +576,7 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
                 doc.text("Date of Issue: " + new Date().toLocaleDateString(), 105, 180, { align: 'center' });
                 
                 // Border
-                doc.setDrawColor(102, 126, 234);
+                doc.setDrawColor(220, 38, 38);
                 doc.setLineWidth(2);
                 doc.rect(15, 15, 180, 250);
                 
@@ -591,8 +593,9 @@ $percentage = ($total_classes > 0) ? round(($total_present / $total_classes) * 1
             const notification = document.createElement('div');
             notification.style.cssText = `
                 position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
-                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
-                color: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#dc2626' : '#ffd700'};
+                color: ${type === 'success' ? 'white' : '#dc2626'};
+                border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                 z-index: 1000; font-weight: 600; transform: translateX(400px);
                 transition: transform 0.3s ease;
             `;
