@@ -14,45 +14,82 @@ $msg = "";
 // ✅ Handle event registration
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['event_id'])) {
     $event_id = (int) $_POST['event_id'];
+    $audition_video = null;
 
-    // Check if already registered
-    $check_stmt = $conn->prepare("SELECT * FROM event_participation WHERE user_id = ? AND event_id = ?");
-    $check_stmt->bind_param("ii", $user_id, $event_id);
-    $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
-
-    if ($check_result->num_rows === 0) {
-        // Check if event has available spots (including pending registrations)
-        $capacity_stmt = $conn->prepare("
-            SELECT e.max_participants, 
-                   COUNT(ep.participation_id) as total_registrations
-            FROM events e 
-            LEFT JOIN event_participation ep ON e.event_id = ep.event_id 
-                AND ep.status IN ('approved', 'pending')
-            WHERE e.event_id = ?
-            GROUP BY e.event_id, e.max_participants
-        ");
-        $capacity_stmt->bind_param("i", $event_id);
-        $capacity_stmt->execute();
-        $capacity_result = $capacity_stmt->get_result();
-        $capacity_data = $capacity_result->fetch_assoc();
+    // Handle video upload if provided
+    if (isset($_FILES['audition_video']) && $_FILES['audition_video']['error'] === UPLOAD_ERR_OK) {
+        $allowed_types = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv'];
+        $max_size = 50 * 1024 * 1024; // 50MB
         
-        $remaining_spots = $capacity_data['max_participants'] - $capacity_data['total_registrations'];
-        
-        if ($remaining_spots > 0) {
-            $insert_stmt = $conn->prepare("INSERT INTO event_participation (event_id, user_id, status) VALUES (?, ?, 'pending')");
-            $insert_stmt->bind_param("ii", $event_id, $user_id);
+        if (in_array($_FILES['audition_video']['type'], $allowed_types) && $_FILES['audition_video']['size'] <= $max_size) {
+            $upload_dir = "uploads/audition_videos/";
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
             
-            if ($insert_stmt->execute()) {
-                $msg = "✅ Registration submitted! Waiting for approval.";
+            $file_extension = pathinfo($_FILES['audition_video']['name'], PATHINFO_EXTENSION);
+            $filename = "audition_" . $user_id . "_" . $event_id . "_" . time() . "." . $file_extension;
+            $upload_path = $upload_dir . $filename;
+            
+            if (move_uploaded_file($_FILES['audition_video']['tmp_name'], $upload_path)) {
+                // Update the events table with the audition video
+                $video_update_stmt = $conn->prepare("UPDATE events SET audition_video = ? WHERE event_id = ?");
+                $video_update_stmt->bind_param("si", $upload_path, $event_id);
+                
+                if ($video_update_stmt->execute()) {
+                    $audition_video = $upload_path;
+                } else {
+                    $msg = "❌ Error saving video to database.";
+                }
             } else {
-                $msg = "❌ Error registering.";
+                $msg = "❌ Error uploading video file.";
             }
         } else {
-            $msg = "❌ Sorry, this event is fully booked.";
+            $msg = "❌ Invalid video file. Only MP4, AVI, MOV, WMV files under 50MB are allowed.";
         }
-    } else {
-        $msg = "⚠️ You've already registered for this event.";
+    }
+
+    // Proceed with registration only if no upload errors
+    if (empty($msg) || isset($audition_video)) {
+        // Check if already registered
+        $check_stmt = $conn->prepare("SELECT * FROM event_participation WHERE user_id = ? AND event_id = ?");
+        $check_stmt->bind_param("ii", $user_id, $event_id);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+
+        if ($check_result->num_rows === 0) {
+            // Check if event has available spots (including pending registrations)
+            $capacity_stmt = $conn->prepare("
+                SELECT e.max_participants, 
+                       COUNT(ep.participation_id) as total_registrations
+                FROM events e 
+                LEFT JOIN event_participation ep ON e.event_id = ep.event_id 
+                    AND ep.status IN ('approved', 'pending')
+                WHERE e.event_id = ?
+                GROUP BY e.event_id, e.max_participants
+            ");
+            $capacity_stmt->bind_param("i", $event_id);
+            $capacity_stmt->execute();
+            $capacity_result = $capacity_stmt->get_result();
+            $capacity_data = $capacity_result->fetch_assoc();
+            
+            $remaining_spots = $capacity_data['max_participants'] - $capacity_data['total_registrations'];
+            
+            if ($remaining_spots > 0) {
+                $insert_stmt = $conn->prepare("INSERT INTO event_participation (event_id, user_id, status) VALUES (?, ?, 'pending')");
+                $insert_stmt->bind_param("ii", $event_id, $user_id);
+                
+                if ($insert_stmt->execute()) {
+                    $msg = "✅ Registration submitted" . (isset($audition_video) ? " with audition video" : "") . "! Waiting for approval.";
+                } else {
+                    $msg = "❌ Error registering.";
+                }
+            } else {
+                $msg = "❌ Sorry, this event is fully booked.";
+            }
+        } else {
+            $msg = "⚠️ You've already registered for this event.";
+        }
     }
 }
 
@@ -131,6 +168,44 @@ $events = $events_stmt->get_result();
             border: 1px solid rgba(34,197,94,0.2);
         }
         .spots-available { font-size: 0.85rem; color: #059669; font-weight: 600; }
+
+        .video-upload-section {
+            background: rgba(147,51,234,0.05); border: 2px dashed rgba(147,51,234,0.3);
+            border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;
+        }
+        
+        .video-upload-section h4 {
+            color: #7c3aed; font-size: 1rem; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        
+        .file-input-wrapper {
+            position: relative; display: inline-block; margin-bottom: 10px;
+        }
+        
+        .file-input {
+            position: absolute; left: -9999px; opacity: 0;
+        }
+        
+        .file-input-label {
+            display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px;
+            background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white;
+            border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-label:hover {
+            transform: translateY(-2px); box-shadow: 0 8px 25px rgba(124,58,237,0.4);
+        }
+        
+        .file-info {
+            font-size: 0.8rem; color: #6b7280; margin-top: 8px; line-height: 1.4;
+        }
+        
+        .selected-file {
+            background: rgba(34,197,94,0.1); color: #059669; padding: 8px 12px;
+            border-radius: 6px; font-size: 0.85rem; margin-top: 10px; display: none;
+        }
 
         .register-btn {
             width: 100%; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white;
@@ -240,8 +315,27 @@ $events = $events_stmt->get_result();
                         <div class="event-description">
                             <?= nl2br(htmlspecialchars($row['description'])) ?>
                         </div>
-                        <form method="POST">
+                        
+                        <form method="POST" enctype="multipart/form-data" id="eventForm<?= $row['event_id'] ?>">
                             <input type="hidden" name="event_id" value="<?= $row['event_id'] ?>">
+                            
+                            <div class="video-upload-section">
+                                <h4><i class="fas fa-video"></i> Upload Audition Video (Optional)</h4>
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="audition_video" id="video<?= $row['event_id'] ?>" 
+                                           class="file-input" accept="video/mp4,video/avi,video/mov,video/wmv">
+                                    <label for="video<?= $row['event_id'] ?>" class="file-input-label">
+                                        <i class="fas fa-upload"></i> Choose Video File
+                                    </label>
+                                </div>
+                                <div class="selected-file" id="selectedFile<?= $row['event_id'] ?>">
+                                    <i class="fas fa-file-video"></i> <span class="filename"></span>
+                                </div>
+                                <div class="file-info">
+                                    <i class="fas fa-info-circle"></i> Supported formats: MP4, AVI, MOV, WMV (Max 50MB)
+                                </div>
+                            </div>
+                            
                             <button type="submit" class="register-btn" <?= $remaining_spots <= 0 ? 'disabled' : '' ?>>
                                 <i class="fas fa-ticket-alt"></i>
                                 <?= $remaining_spots > 0 ? 'Register Now' : 'Fully Booked' ?>
@@ -263,6 +357,32 @@ $events = $events_stmt->get_result();
         document.addEventListener('DOMContentLoaded', function() {
             const eventCards = document.querySelectorAll('.event-card');
             const registerButtons = document.querySelectorAll('.register-btn');
+            const fileInputs = document.querySelectorAll('.file-input');
+            
+            // File input handling
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const eventId = this.id.replace('video', '');
+                    const selectedFileDiv = document.getElementById('selectedFile' + eventId);
+                    const filenameSpan = selectedFileDiv.querySelector('.filename');
+                    
+                    if (this.files.length > 0) {
+                        const file = this.files[0];
+                        const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+                        filenameSpan.textContent = `${file.name} (${fileSize} MB)`;
+                        selectedFileDiv.style.display = 'block';
+                        
+                        // Validate file size
+                        if (file.size > 50 * 1024 * 1024) {
+                            alert('File size exceeds 50MB limit. Please choose a smaller file.');
+                            this.value = '';
+                            selectedFileDiv.style.display = 'none';
+                        }
+                    } else {
+                        selectedFileDiv.style.display = 'none';
+                    }
+                });
+            });
             
             eventCards.forEach(card => {
                 card.addEventListener('mouseenter', function() {

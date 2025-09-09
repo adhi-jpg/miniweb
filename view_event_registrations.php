@@ -9,10 +9,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 $status_msg = "";
 
-// Handle approval/rejection - SIMPLIFIED VERSION
+// Handle approval/rejection with feedback
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['participation_id'], $_POST['action'])) {
     $participation_id = intval($_POST['participation_id']);
     $action = $_POST['action'];
+    $feedback = isset($_POST['feedback']) ? trim($_POST['feedback']) : '';
 
     if (in_array($action, ['confirmed', 'rejected'])) {
         
@@ -25,8 +26,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['participation_id'], $
             $event_id = $event_data['event_id'];
             $current_status = $event_data['status'];
             
-            // Update the participation status
-            $update_query = "UPDATE event_participation SET status = '$action' WHERE participation_id = $participation_id";
+            // Update the participation status with feedback
+            $update_query = "UPDATE event_participation SET status = '$action',feedback = '" . $conn->real_escape_string($feedback) . "' WHERE participation_id = $participation_id";
             
             if ($conn->query($update_query)) {
                 
@@ -64,15 +65,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['participation_id'], $
     }
 }
 
-// Simple query to get all registrations
+// Modified query to include admin_feedback from event_participation table
 $sql = "SELECT 
             ep.participation_id, 
             ep.event_id, 
             e.title as event_title,
             e.max_participants as available_spots,
+            e.audition_video,
             sp.name, 
             sp.roll_number, 
-            ep.status
+            ep.status,
+            ep.feedback
         FROM event_participation ep
         JOIN student_profiles sp ON ep.user_id = sp.user_id
         JOIN events e ON ep.event_id = e.event_id
@@ -207,6 +210,18 @@ if (!$result) {
         
         .btn-reject:hover { background: #c82333; }
         
+        .btn-video {
+            background: #6f42c1;
+            color: white;
+        }
+        
+        .btn-feedback {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-feedback:hover { background: #138496; }
+        
         .event-info {
             font-size: 14px;
             color: #6c757d;
@@ -240,6 +255,104 @@ if (!$result) {
             pointer-events: none;
             opacity: 0.6;
         }
+        
+        /* Video Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+        
+        .modal-content {
+            position: relative;
+            margin: 5% auto;
+            width: 80%;
+            max-width: 800px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .video-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .video-container video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        
+        .video-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        /* Feedback Modal Styles */
+        .feedback-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .feedback-form textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+        
+        .feedback-form textarea:focus {
+            outline: none;
+            border-color: #80bdff;
+        }
+        
+        .feedback-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .existing-feedback {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px 16px;
+            margin-top: 8px;
+            font-size: 13px;
+            border-radius: 4px;
+        }
+        
+        .existing-feedback strong {
+            color: #1976d2;
+        }
     </style>
 </head>
 <body>
@@ -262,6 +375,7 @@ if (!$result) {
                             <th>Student</th>
                             <th>Roll No</th>
                             <th>Status</th>
+                            <th>Feedback</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -288,25 +402,44 @@ if (!$result) {
                                     </span>
                                 </td>
                                 <td>
+                                    <?php if (!empty($row['audition_video']) && file_exists($row['audition_video'])): ?>
+                                        <button type="button" class="btn btn-video" onclick="openVideoModal('<?= htmlspecialchars($row['audition_video']) ?>', '<?= htmlspecialchars($row['event_title']) ?>')">
+                                            <i class="fas fa-play"></i> View Video
+                                        </button>
+                                    <?php else: ?>
+                                        <small style="color: #6c757d; font-style: italic;">
+                                            No video
+                                        </small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($row['feedback'])): ?>
+                                        <div class="existing-feedback">
+                                            <strong>Admin Feedback:</strong><br>
+                                            <?= nl2br(htmlspecialchars($row['feedback'])) ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <small style="color: #6c757d; font-style: italic;">
+                                            No feedback yet
+                                        </small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
                                     <?php if ($row['status'] === 'pending'): ?>
-                                        <form method="POST" style="display: inline;">
-                                            <input type="hidden" name="participation_id" value="<?= $row['participation_id'] ?>">
-                                            <button type="submit" name="action" value="confirmed" 
-                                                    class="btn btn-approve" 
-                                                    <?= ($spots <= 0) ? 'disabled' : '' ?>
-                                                    onclick="return confirm('Approve registration for <?= htmlspecialchars($row['name']) ?>?\\n\\nThis will reduce available spots by 1.')">
-                                                <i class="fas fa-check"></i> Approve
-                                            </button>
-                                            <button type="submit" name="action" value="rejected" 
-                                                    class="btn btn-reject"
-                                                    onclick="return confirm('Reject registration for <?= htmlspecialchars($row['name']) ?>?')">
-                                                <i class="fas fa-times"></i> Reject
-                                            </button>
-                                        </form>
+                                        <button type="button" class="btn btn-video" onclick="openFeedbackModal(<?= $row['participation_id'] ?>, '<?= htmlspecialchars($row['name']) ?>', '<?= htmlspecialchars($row['event_title']) ?>', 'confirmed', <?= $spots ?>)">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button type="button" class="btn btn-reject" onclick="openFeedbackModal(<?= $row['participation_id'] ?>, '<?= htmlspecialchars($row['name']) ?>', '<?= htmlspecialchars($row['event_title']) ?>', 'rejected', <?= $spots ?>)">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
                                     <?php else: ?>
                                         <small style="color: #6c757d; font-style: italic;">
                                             Already <?= $row['status'] ?>
                                         </small>
+                                        <br>
+                                        <button type="button" class="btn btn-feedback" onclick="openFeedbackModal(<?= $row['participation_id'] ?>, '<?= htmlspecialchars($row['name']) ?>', '<?= htmlspecialchars($row['event_title']) ?>', 'feedback', <?= $spots ?>)">
+                                            <i class="fas fa-comment"></i> Update Feedback
+                                        </button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -323,6 +456,53 @@ if (!$result) {
         <?php endif; ?>
     </div>
 
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeFeedbackModal()">&times;</span>
+            <div class="video-info">
+                <h3><i class="fas fa-comment-alt"></i> Provide Feedback</h3>
+                <p><strong>Student:</strong> <span id="modalStudentName"></span></p>
+                <p><strong>Event:</strong> <span id="modalEventName"></span></p>
+                <p><strong>Action:</strong> <span id="modalAction"></span></p>
+            </div>
+            <form method="POST" id="feedbackForm" class="feedback-form">
+                <input type="hidden" name="participation_id" id="modalParticipationId">
+                <input type="hidden" name="action" id="modalActionValue">
+                
+                <label for="feedbackText" style="display: block; margin-bottom: 8px; font-weight: 600; color: #495057;">
+                    <i class="fas fa-pencil-alt"></i> Feedback Message:
+                </label>
+                <textarea name="feedback" id="feedbackText" placeholder="Enter your feedback for the student..." required></textarea>
+                
+                <div class="feedback-actions">
+                    <button type="button" class="btn" onclick="closeFeedbackModal()" style="background: #6c757d; color: white;">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-approve" id="submitFeedback">
+                        <i class="fas fa-paper-plane"></i> Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeVideoModal()">&times;</span>
+            <div class="video-info">
+                <h3><i class="fas fa-video"></i> Audition Video</h3>
+                <p><strong>Event:</strong> <span id="modalEventTitle"></span></p>
+            </div>
+            <div class="video-container">
+                <video id="modalVideo" controls width="100%">
+                    <p>Your browser doesn't support HTML5 video. <a id="videoDownload" href="#">Download the video</a> instead.</p>
+                </video>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Add loading state to buttons when clicked
         document.querySelectorAll('button[type="submit"]').forEach(function(button) {
@@ -336,6 +516,99 @@ if (!$result) {
                     this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                 }, 100);
             });
+        });
+
+        // Feedback Modal Functions
+        function openFeedbackModal(participationId, studentName, eventTitle, action, availableSpots) {
+            // Check if approving and no spots available
+            if (action === 'confirmed' && availableSpots <= 0) {
+                alert('Cannot approve - no spots available for this event!');
+                return;
+            }
+            
+            const modal = document.getElementById('feedbackModal');
+            const modalStudentName = document.getElementById('modalStudentName');
+            const modalEventName = document.getElementById('modalEventName');
+            const modalAction = document.getElementById('modalAction');
+            const modalParticipationId = document.getElementById('modalParticipationId');
+            const modalActionValue = document.getElementById('modalActionValue');
+            const feedbackText = document.getElementById('feedbackText');
+            const submitButton = document.getElementById('submitFeedback');
+            
+            modalStudentName.textContent = studentName;
+            modalEventName.textContent = eventTitle;
+            modalParticipationId.value = participationId;
+            modalActionValue.value = action;
+            
+            // Set action text and button style
+            if (action === 'confirmed') {
+                modalAction.textContent = 'Approve Registration';
+                modalAction.style.color = '#28a745';
+                submitButton.className = 'btn btn-approve';
+                submitButton.innerHTML = '<i class="fas fa-check"></i> Approve & Send Feedback';
+                feedbackText.placeholder = 'Congratulations! Your registration has been approved. Additional notes...';
+            } else if (action === 'rejected') {
+                modalAction.textContent = 'Reject Registration';
+                modalAction.style.color = '#dc3545';
+                submitButton.className = 'btn btn-reject';
+                submitButton.innerHTML = '<i class="fas fa-times"></i> Reject & Send Feedback';
+                feedbackText.placeholder = 'Sorry, your registration has been rejected. Reason...';
+            } else {
+                modalAction.textContent = 'Update Feedback';
+                modalAction.style.color = '#17a2b8';
+                submitButton.className = 'btn btn-feedback';
+                submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Update Feedback';
+                feedbackText.placeholder = 'Update feedback message...';
+            }
+            
+            feedbackText.value = '';
+            modal.style.display = 'block';
+            feedbackText.focus();
+        }
+
+        function closeFeedbackModal() {
+            const modal = document.getElementById('feedbackModal');
+            modal.style.display = 'none';
+        }
+        function openVideoModal(videoPath, eventTitle) {
+            const modal = document.getElementById('videoModal');
+            const modalVideo = document.getElementById('modalVideo');
+            const modalEventTitle = document.getElementById('modalEventTitle');
+            const videoDownload = document.getElementById('videoDownload');
+            
+            modalEventTitle.textContent = eventTitle;
+            modalVideo.src = videoPath;
+            videoDownload.href = videoPath;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeVideoModal() {
+            const modal = document.getElementById('videoModal');
+            const modalVideo = document.getElementById('modalVideo');
+            
+            modal.style.display = 'none';
+            modalVideo.pause();
+            modalVideo.src = '';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const videoModal = document.getElementById('videoModal');
+            const feedbackModal = document.getElementById('feedbackModal');
+            if (event.target === videoModal) {
+                closeVideoModal();
+            } else if (event.target === feedbackModal) {
+                closeFeedbackModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeVideoModal();
+                closeFeedbackModal();
+            }
         });
     </script>
 </body>

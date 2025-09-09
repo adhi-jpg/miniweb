@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $faculty = $conn->query("SELECT f.user_id, f.name FROM faculty_profiles f");
 // Get previous submissions
 $previous = $conn->query("
-    SELECT ep.proposal_id, ep.title, ep.description, ep.proposed_date, ep.venue, ep.status, f.name AS faculty_name
+    SELECT ep.proposal_id, ep.title, ep.description, ep.proposed_date, ep.venue, ep.status, ep.feedback, f.name AS faculty_name
     FROM event_proposals ep
     JOIN faculty_profiles f ON ep.faculty_id = f.user_id
     WHERE ep.admin_id = $admin_id
@@ -380,6 +380,7 @@ $previous = $conn->query("
                             <th><i class="fas fa-map-marker-alt"></i> Venue</th>
                             <th><i class="fas fa-user-tie"></i> Faculty Reviewer</th>
                             <th><i class="fas fa-flag"></i> Status</th>
+                            <th><i class="fas fa-comment"></i> Feedback</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -409,11 +410,18 @@ $previous = $conn->query("
                                             ?>
                                         </span>
                                     </td>
+                                    <td>
+                                        <?php if (!empty($row['feedback'])): ?>
+                                            <?= htmlspecialchars(substr($row['feedback'], 0, 100)) . (strlen($row['feedback']) > 100 ? '...' : '') ?>
+                                        <?php else: ?>
+                                            <span style="color: #718096; font-style: italic;">No feedback yet</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endwhile; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6" class="empty-state">
+                                <td colspan="7" class="empty-state">
                                     <i class="fas fa-inbox"></i>
                                     <div>No proposals submitted yet.</div>
                                     <small>Your submitted proposals will appear here.</small>

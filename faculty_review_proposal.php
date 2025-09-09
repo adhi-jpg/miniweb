@@ -9,6 +9,18 @@ if ($_SESSION['role'] != 'faculty') {
 
 $faculty_id = $_SESSION['user_id'];
 
+// Handle feedback update
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_feedback'])) {
+    $proposal_id = intval($_POST['proposal_id']);
+    $feedback_text = mysqli_real_escape_string($conn, $_POST['feedback_text']);
+    
+    $feedback_sql = "UPDATE event_proposals SET feedback='$feedback_text' WHERE proposal_id=$proposal_id AND faculty_id=$faculty_id";
+    
+    if ($conn->query($feedback_sql)) {
+        echo "<script>alert('Feedback submitted successfully!');</script>";
+    }
+}
+
 // Approve or Reject
 if (isset($_GET['approve'])) {
     $id = intval($_GET['approve']);
@@ -19,7 +31,7 @@ if (isset($_GET['approve'])) {
 }
 
 // Get proposals assigned to this faculty
-$sql = "SELECT ep.proposal_id, ep.title, ep.description, ep.proposed_date, ep.venue, ep.status, u.email AS admin_email 
+$sql = "SELECT ep.proposal_id, ep.title, ep.description, ep.proposed_date, ep.venue, ep.status, ep.feedback, u.email AS admin_email 
         FROM event_proposals ep
         JOIN users u ON ep.admin_id = u.user_id
         WHERE ep.faculty_id = $faculty_id";
@@ -63,7 +75,7 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
         .filter-tab:hover{background:#e2e8f0}
         .filter-tab.active{background:#5a67d8;color:white}
         .table-container{overflow-x:auto;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.05)}
-        table{width:100%;border-collapse:collapse;background:white;min-width:800px}
+        table{width:100%;border-collapse:collapse;background:white;min-width:900px}
         th{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:18px 15px;text-align:left;font-weight:600;text-transform:uppercase;font-size:0.85rem;letter-spacing:0.5px;position:sticky;top:0;z-index:10}
         td{padding:18px 15px;border-bottom:1px solid #e2e8f0;vertical-align:top}
         tr:hover td{background-color:#f8fafc}
@@ -83,6 +95,8 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
         .btn-approve:hover{background:#38a169;transform:translateY(-1px);box-shadow:0 4px 12px rgba(72,187,120,0.4)}
         .btn-reject{background:#f56565;color:white}
         .btn-reject:hover{background:#e53e3e;transform:translateY(-1px);box-shadow:0 4px 12px rgba(245,101,101,0.4)}
+        .btn-feedback{background:#9f7aea;color:white}
+        .btn-feedback:hover{background:#805ad5;transform:translateY(-1px);box-shadow:0 4px 12px rgba(159,122,234,0.4)}
         .no-action{color:#a0aec0;font-style:italic;display:flex;align-items:center;gap:6px}
         .empty-state{text-align:center;padding:60px 20px;color:#718096}
         .empty-state i{font-size:4rem;margin-bottom:20px;opacity:0.3}
@@ -98,6 +112,10 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
         .modal-buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
         .btn-secondary{background:#e2e8f0;color:#4a5568}
         .btn-secondary:hover{background:#cbd5e0}
+        .form-group{margin-bottom:20px}
+        .form-label{display:block;margin-bottom:8px;font-weight:600;color:#4a5568}
+        .form-textarea{width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;resize:vertical;min-height:100px}
+        .form-textarea:focus{outline:none;border-color:#5a67d8;box-shadow:0 0 0 3px rgba(90,103,216,0.1)}
         @media (max-width:768px){.container{padding:15px}.header h1{font-size:2rem}.stats-grid{grid-template-columns:repeat(2,1fr)}.main-card{padding:20px}.filter-tabs{flex-wrap:wrap}.action-buttons{flex-direction:column}table{font-size:0.9rem}th,td{padding:12px 10px}}
         @media (max-width:480px){.stats-grid{grid-template-columns:1fr}.stat-card{padding:20px}}
     </style>
@@ -253,6 +271,9 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
                                             No Action Available
                                         </div>
                                     <?php endif; ?>
+                                    <button class="btn btn-feedback" onclick="openFeedbackModal(<?= $row['proposal_id'] ?>, '<?= htmlspecialchars($row['title']) ?>', '<?= htmlspecialchars($row['feedback'] ?? '') ?>')">
+                                        <i class="fas fa-comment"></i> <?= !empty($row['feedback']) ? 'Edit Feedback' : 'Add Feedback' ?>
+                                    </button>
                                 </td>
                             </tr>
                             <?php endwhile; ?>
@@ -283,6 +304,27 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
         </div>
     </div>
 
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-comment"></i> Add Feedback</h3>
+            <form method="POST">
+                <input type="hidden" name="proposal_id" id="feedbackProposalId">
+                <input type="hidden" name="submit_feedback" value="1">
+                
+                <div class="form-group">
+                    <label class="form-label">Your Feedback:</label>
+                    <textarea name="feedback_text" id="feedbackText" class="form-textarea" placeholder="Enter your feedback here..." required></textarea>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeFeedbackModal()">Cancel</button>
+                    <button type="submit" class="btn btn-feedback">Submit Feedback</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let currentAction,currentId;
         function filterProposals(status){document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));event.target.classList.add('active');document.querySelectorAll('.proposal-row').forEach(r=>r.style.display=status==='all'||r.dataset.status===status?'':'none')}
@@ -290,7 +332,9 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
         function confirmAction(a,i,t){currentAction=a;currentId=i;const m=document.getElementById('confirmModal'),mt=document.getElementById('modalTitle'),mm=document.getElementById('modalMessage'),cb=document.getElementById('confirmButton');if(a==='approve'){mt.innerHTML='<i class="fas fa-check-circle" style="color:#48bb78;"></i> Approve Proposal';mm.textContent=`Are you sure you want to approve "${t}"?`;cb.className='btn btn-approve';cb.innerHTML='<i class="fas fa-check"></i> Approve'}else{mt.innerHTML='<i class="fas fa-times-circle" style="color:#f56565;"></i> Reject Proposal';mm.textContent=`Are you sure you want to reject "${t}"?`;cb.className='btn btn-reject';cb.innerHTML='<i class="fas fa-times"></i> Reject'}m.style.display='block'}
         function closeModal(){document.getElementById('confirmModal').style.display='none';currentAction=currentId=null}
         function executeAction(){if(currentAction&&currentId){document.getElementById('loading').style.display='block';window.location.href=`?${currentAction}=${currentId}`}}
-        window.onclick=e=>{if(e.target===document.getElementById('confirmModal'))closeModal()}
+        function openFeedbackModal(proposalId, title, existingFeedback){document.getElementById('feedbackProposalId').value=proposalId;document.querySelector('#feedbackModal h3').innerHTML=`<i class="fas fa-comment"></i> Feedback for "${title}"`;document.getElementById('feedbackText').value=existingFeedback||'';document.getElementById('feedbackModal').style.display='block'}
+        function closeFeedbackModal(){document.getElementById('feedbackModal').style.display='none'}
+        window.onclick=e=>{if(e.target===document.getElementById('confirmModal'))closeModal();if(e.target===document.getElementById('feedbackModal'))closeFeedbackModal()}
         if(window.location.search.includes('approve=')||window.location.search.includes('reject=')){const a=window.location.search.includes('approve=')?'approved':'rejected',m=document.createElement('div');m.className='alert alert-success';m.innerHTML=`<i class="fas fa-check-circle"></i> Proposal has been ${a} successfully!`;m.style.cssText='position:fixed;top:20px;right:20px;background:#d4edda;color:#155724;padding:15px 20px;border-radius:8px;border-left:5px solid #28a745;z-index:1001;animation:slideIn 0.5s';document.body.appendChild(m);setTimeout(()=>{m.style.opacity='0';m.style.transform='translateX(100%)';setTimeout(()=>m.remove(),300)},3000);history.replaceState({},'',window.location.pathname)}
         document.querySelectorAll('.proposal-row').forEach(r=>{r.addEventListener('mouseenter',function(){this.style.transform='scale(1.01)';this.style.boxShadow='0 5px 15px rgba(0,0,0,0.1)'});r.addEventListener('mouseleave',function(){this.style.transform='scale(1)';this.style.boxShadow='none'})})
     </script>
