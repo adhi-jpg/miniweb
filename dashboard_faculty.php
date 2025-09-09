@@ -236,16 +236,6 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "faculty") {
                 <h3>Proposals</h3>
                 <p>proposals for events.</p>
             </a>
-
-            <div class="card">
-                <h3>View Feedback</h3>
-                <p>Access comprehensive feedback submitted by students for events, courses, and overall club experience.</p>
-            </div>
-
-            <div class="card">
-                <h3>View Student Engagement</h3>
-                <p>Monitor and analyze student involvement metrics, participation trends, and engagement analytics.</p>
-            </div>
         </div>
     </div>
 

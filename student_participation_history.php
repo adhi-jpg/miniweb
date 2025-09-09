@@ -45,13 +45,13 @@ $result = $stmt->get_result();
         
         body { 
             font-family: 'Inter', 'Segoe UI', sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 50%, #fca5a5 100%);
             min-height: 100vh;
             padding: 20px 0;
         }
         
         header { 
-            background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 50%, #ff6b6b 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
             padding: 25px; 
             color: white; 
             font-size: 26px; 
@@ -90,7 +90,7 @@ $result = $stmt->get_result();
         }
         
         th { 
-            background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
             color: white; 
             font-weight: 600;
             font-size: 14px;
@@ -106,11 +106,11 @@ $result = $stmt->get_result();
         }
         
         tr:nth-child(even) { 
-            background: rgba(116, 75, 162, 0.02);
+            background: rgba(220, 38, 38, 0.02);
         }
         
         tr:hover { 
-            background: rgba(116, 75, 162, 0.08);
+            background: rgba(220, 38, 38, 0.08);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
@@ -150,14 +150,14 @@ $result = $stmt->get_result();
         }
         
         .feedback-content {
-            background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
             padding: 15px;
             border-radius: 12px;
-            border-left: 4px solid #4a00e0;
+            border-left: 4px solid #dc2626;
             font-size: 14px;
             line-height: 1.6;
             margin: 8px 0;
-            box-shadow: 0 4px 12px rgba(74, 0, 224, 0.1);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
             position: relative;
         }
         
@@ -167,7 +167,7 @@ $result = $stmt->get_result();
             top: 5px;
             left: 8px;
             font-size: 24px;
-            color: #4a00e0;
+            color: #dc2626;
             opacity: 0.3;
         }
         
@@ -184,7 +184,7 @@ $result = $stmt->get_result();
         }
         
         .view-feedback-btn {
-            background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
             color: white;
             border: none;
             padding: 8px 16px;
@@ -194,13 +194,13 @@ $result = $stmt->get_result();
             font-weight: 600;
             margin-top: 10px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(74, 0, 224, 0.3);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
         }
         
         .view-feedback-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(74, 0, 224, 0.4);
-            background: linear-gradient(135deg, #3700b3 0%, #7b1fa2 100%);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
         }
         
         .no-data { 
@@ -232,25 +232,25 @@ $result = $stmt->get_result();
         
         select { 
             background: rgba(255,255,255,0.9);
-            border: 2px solid rgba(74, 0, 224, 0.2);
-            color: #4a00e0;
+            border: 2px solid rgba(220, 38, 38, 0.2);
+            color: #dc2626;
         }
         
         select:focus {
             outline: none;
-            border-color: #4a00e0;
-            box-shadow: 0 0 0 3px rgba(74, 0, 224, 0.1);
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
         
         button { 
-            background: linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
             color: white;
-            box-shadow: 0 4px 15px rgba(74, 0, 224, 0.3);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
         }
         
         button:hover { 
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(74, 0, 224, 0.4);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
         }
         
         /* Modal Styles */
@@ -282,12 +282,12 @@ $result = $stmt->get_result();
         }
         
         .modal h3 {
-            color: #4a00e0;
+            color: #dc2626;
             margin-bottom: 20px;
             font-size: 20px;
             font-weight: 700;
             padding-bottom: 10px;
-            border-bottom: 2px solid #f0f2ff;
+            border-bottom: 2px solid #fecaca;
         }
         
         .close {
@@ -308,21 +308,21 @@ $result = $stmt->get_result();
         }
         
         .close:hover { 
-            color: #4a00e0;
-            background: rgba(74, 0, 224, 0.1);
+            color: #dc2626;
+            background: rgba(220, 38, 38, 0.1);
             transform: rotate(90deg);
         }
         
         #modalFeedbackContent {
-            background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
             padding: 20px;
             border-radius: 15px;
-            border-left: 5px solid #4a00e0;
+            border-left: 5px solid #dc2626;
             font-size: 16px;
             line-height: 1.7;
             color: #333;
             margin-top: 15px;
-            box-shadow: 0 5px 20px rgba(74, 0, 224, 0.1);
+            box-shadow: 0 5px 20px rgba(220, 38, 38, 0.1);
         }
         
         /* Animations */
@@ -381,12 +381,12 @@ $result = $stmt->get_result();
         }
         
         ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #4a00e0, #8e2de2);
+            background: linear-gradient(135deg, #dc2626, #ef4444);
             border-radius: 10px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #3700b3, #7b1fa2);
+            background: linear-gradient(135deg, #991b1b, #dc2626);
         }
     </style>
 </head>
@@ -465,7 +465,7 @@ $result = $stmt->get_result();
         <div class="no-data">
             <i class="fas fa-info-circle"></i> No participation records found.
             <?php if ($status_filter !== 'all'): ?>
-            <a href="?status=all" style="color: #4a00e0; text-decoration: none;">View all records</a>
+            <a href="?status=all" style="color: #dc2626; text-decoration: none;">View all records</a>
             <?php endif; ?>
         </div>
     <?php endif; ?>
@@ -476,7 +476,7 @@ $result = $stmt->get_result();
     <div class="modal-content">
         <span class="close" onclick="closeFeedbackModal()">&times;</span>
         <h3 id="modalEventTitle">Admin Feedback</h3>
-        <div id="modalFeedbackContent" style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #4a00e0; margin-top: 10px;"></div>
+        <div id="modalFeedbackContent" style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #dc2626; margin-top: 10px;"></div>
     </div>
 </div>
 

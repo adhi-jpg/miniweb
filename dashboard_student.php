@@ -239,13 +239,6 @@ foreach ($queries as $key => $query) {
         <div class="stat-item"><div class="stat-number"><?= $stats['attendance'] ?>%</div><div class="stat-label">Attendance</div></div>
         <div class="stat-item"><div class="stat-number"><?= $stats['notifications'] ?></div><div class="stat-label">New Updates</div></div>
     </div>
-
-    <div class="profile-actions">
-        <a href="profile_edit.php" class="profile-btn"><i class="fas fa-edit"></i> Edit Profile</a>
-        <a href="student_certificates.php" class="profile-btn"><i class="fas fa-certificate"></i> My Certificates</a>
-        <a href="student_notifications.php" class="profile-btn"><i class="fas fa-bell"></i> Notifications</a>
-        <a href="student_settings.php" class="profile-btn"><i class="fas fa-cog"></i> Settings</a>
-    </div>
 </div>
 
 <div class="main-content" id="mainContent">
@@ -282,14 +275,6 @@ foreach ($queries as $key => $query) {
                 <h3><i class="fas fa-history"></i> My Participation</h3>
                 <p>Track your event history and approvals.</p>
             </a>
-            <div class="card">
-                <h3><i class="fas fa-comment-alt"></i> Submit Feedback</h3>
-                <p>Share suggestions or report issues.</p>
-            </div>
-            <div class="card">
-                <h3><i class="fas fa-book-open"></i> Resources</h3>
-                <p>Access club materials and past content.</p>
-            </div>
             <a href="student_attendance.php" class="card">
                 <h3><i class="fas fa-user-check"></i> Attendance</h3>
                 <p>View the attendance.</p>
