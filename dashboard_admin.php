@@ -653,10 +653,19 @@ if (isset($_POST["add_admin"])) {
 
     <a href="admin_event_proposal.php" class="stat-card">
         <div class="stat-icon">
-            <i class="fas fa-file-alt"></i>
+            <i class="fas fa-file-signature"></i>
         </div>
         <h3>event proposal</h3>
         <p>proposal for creating event to faculty</p>
+    </a>
+
+    
+    <a href="admin_delivery.php" class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-truck-fast"></i>
+        </div>
+        <h3>Delivery status</h3>
+        <p>Delivery status of ordersof mdc products</p>
     </a>
 
     <!-- 9. View Status of Reports -->

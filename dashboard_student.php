@@ -122,6 +122,16 @@ foreach ($queries as $key => $query) {
         .profile-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateX(5px); }
         .profile-btn i { font-size: 18px; }
 
+        /* Special styling for profile edit button */
+        .profile-btn.edit-profile {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .profile-btn.edit-profile:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3));
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
         header {
             background: var(--glass); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); color: white; padding: 25px 40px;
             display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow);
@@ -239,6 +249,27 @@ foreach ($queries as $key => $query) {
         <div class="stat-item"><div class="stat-number"><?= $stats['attendance'] ?>%</div><div class="stat-label">Attendance</div></div>
         <div class="stat-item"><div class="stat-number"><?= $stats['notifications'] ?></div><div class="stat-label">New Updates</div></div>
     </div>
+
+    <div class="profile-actions">
+        <a href="update_profile.php" class="profile-btn edit-profile">
+            <i class="fas fa-user-edit"></i> Update Profile
+        </a>
+        <a href="events_student.php" class="profile-btn">
+            <i class="fas fa-calendar-alt"></i> My Events
+        </a>
+        <a href="student_participation_history.php" class="profile-btn">
+            <i class="fas fa-history"></i> Participation History
+        </a>
+        <a href="student_attendance.php" class="profile-btn">
+            <i class="fas fa-user-check"></i> View Attendance
+        </a>
+        <a href="view_media_gallery.php" class="profile-btn">
+            <i class="fas fa-images"></i> Media Gallery
+        </a>
+        <a href="student_buy_merchandise.php" class="profile-btn">
+            <i class="fas fa-shopping-cart"></i> MDC Products
+        </a>
+    </div>
 </div>
 
 <div class="main-content" id="mainContent">
@@ -286,6 +317,10 @@ foreach ($queries as $key => $query) {
             <a href="student_buy_merchandise.php" class="card">
                 <h3><i class="fas fa-shopping-cart"></i> MDC Products</h3>
                 <p>To buy MDC products for further programs.</p>
+            </a>
+            <a href="delivery.php" class="card">
+                <h3><i class="fas fa-truck"></i> Delivery Confirmation</h3>
+                <p>To confirm the delivery.</p>
             </a>
         </div>
     </div>
