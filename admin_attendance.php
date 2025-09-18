@@ -74,11 +74,12 @@ $selected_date = isset($_POST['date']) ? $_POST['date'] : date('Y-m-d');
 
 $students = null;
 if ($selected_event) {
+    // Modified query to only load students with 'confirmed' status
     $students_query = "SELECT u.user_id, s.name, s.roll_number
                       FROM event_participation ep
                       JOIN users u ON ep.user_id = u.user_id
                       JOIN student_profiles s ON u.user_id = s.user_id
-                      WHERE ep.event_id = ?
+                      WHERE ep.event_id = ? AND ep.status = 'confirmed'
                       ORDER BY s.roll_number";
     
     $stmt = mysqli_prepare($conn, $students_query);
