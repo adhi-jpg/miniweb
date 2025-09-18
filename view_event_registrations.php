@@ -12,10 +12,16 @@ $status_msg = "";
 // Handle approval/rejection with feedback
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['participation_id'], $_POST['action'])) {
     $participation_id = intval($_POST['participation_id']);
-    $action = $_POST['action'];
+    $action = trim($_POST['action']);
     $feedback = isset($_POST['feedback']) ? trim($_POST['feedback']) : '';
 
-    if (in_array($action, ['confirmed', 'rejected'])) {
+    // Debug: Let's see what we're receiving
+    error_log("Debug - Action received: " . $action);
+    error_log("Debug - Participation ID: " . $participation_id);
+    error_log("Debug - Feedback: " . $feedback);
+
+    // Validate action to ensure only allowed values are processed
+    if (in_array($action, ['confirmed', 'rejected', 'feedback'])) {
         
         // Get the event_id for this participation
         $get_event_query = "SELECT event_id, status FROM event_participation WHERE participation_id = $participation_id";
@@ -26,42 +32,79 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['participation_id'], $
             $event_id = $event_data['event_id'];
             $current_status = $event_data['status'];
             
-            // Update the participation status with feedback
-            $update_query = "UPDATE event_participation SET status = '$action',feedback = '" . $conn->real_escape_string($feedback) . "' WHERE participation_id = $participation_id";
-            
-            if ($conn->query($update_query)) {
+            // Handle different actions
+            if ($action === 'feedback') {
+                // Only update feedback, don't change status
+                $update_query = "UPDATE event_participation SET feedback = '" . $conn->real_escape_string($feedback) . "' WHERE participation_id = $participation_id";
                 
-                // Only reduce count when approving a pending registration
-                if ($action === 'confirmed' && $current_status === 'pending') {
-                    $reduce_query = "UPDATE events SET max_participants = max_participants - 1 WHERE event_id = $event_id AND max_participants > 0";
+                if ($conn->query($update_query)) {
+                    $status_msg = "✅ Feedback updated successfully.";
+                } else {
+                    $status_msg = "❌ Failed to update feedback: " . $conn->error;
+                }
+            } else {
+                // For approve/reject actions, explicitly set the status
+                if ($action === 'confirmed') {
+                    $status_value = 'confirmed';
+                } else if ($action === 'rejected') {
+                    $status_value = 'rejected';
+                } else {
+                    $status_value = $action;
+                }
+                
+                // Update both status and feedback for approve/reject actions
+                $update_query = "UPDATE event_participation SET status = '" . $conn->real_escape_string($status_value) . "', feedback = '" . $conn->real_escape_string($feedback) . "' WHERE participation_id = $participation_id";
+                
+                error_log("Debug - Update query: " . $update_query);
+                
+                if ($conn->query($update_query)) {
                     
-                    if ($conn->query($reduce_query)) {
-                        $status_msg = "✅ Registration approved! Available spots reduced by 1.";
+                    // Check if the update actually affected any rows
+                    if ($conn->affected_rows > 0) {
+                        
+                        // Only reduce count when approving a pending registration
+                        if ($status_value === 'confirmed' && $current_status === 'pending') {
+                            $reduce_query = "UPDATE events SET max_participants = max_participants - 1 WHERE event_id = $event_id AND max_participants > 0";
+                            
+                            if ($conn->query($reduce_query)) {
+                                $status_msg = "✅ Registration approved! Available spots reduced by 1.";
+                            } else {
+                                $status_msg = "✅ Registration approved, but failed to reduce count.";
+                            }
+                            
+                        } elseif ($status_value === 'rejected' && $current_status === 'confirmed') {
+                            // Increase count when rejecting a previously confirmed registration
+                            $increase_query = "UPDATE events SET max_participants = max_participants + 1 WHERE event_id = $event_id";
+                            
+                            if ($conn->query($increase_query)) {
+                                $status_msg = "✅ Registration rejected! Available spots increased by 1.";
+                            } else {
+                                $status_msg = "✅ Registration rejected, but failed to increase count.";
+                            }
+                            
+                        } elseif ($status_value === 'rejected') {
+                            // Simple rejection (from pending or other status)
+                            $status_msg = "✅ Registration rejected successfully.";
+                        } else {
+                            $status_msg = "✅ Status updated successfully to: " . $status_value;
+                        }
+                        
                     } else {
-                        $status_msg = "✅ Registration approved, but failed to reduce count.";
-                    }
-                    
-                } elseif ($action === 'rejected' && $current_status === 'confirmed') {
-                    // Increase count when rejecting a previously confirmed registration
-                    $increase_query = "UPDATE events SET max_participants = max_participants + 1 WHERE event_id = $event_id";
-                    
-                    if ($conn->query($increase_query)) {
-                        $status_msg = "✅ Registration rejected! Available spots increased by 1.";
-                    } else {
-                        $status_msg = "✅ Registration rejected, but failed to increase count.";
+                        $status_msg = "❌ No rows were updated. Check if participation ID exists.";
                     }
                     
                 } else {
-                    $status_msg = "✅ Status updated successfully.";
+                    $status_msg = "❌ Failed to update status: " . $conn->error;
+                    error_log("MySQL Error: " . $conn->error);
                 }
-                
-            } else {
-                $status_msg = "❌ Failed to update status: " . $conn->error;
             }
             
         } else {
             $status_msg = "❌ Participation record not found.";
         }
+        
+    } else {
+        $status_msg = "❌ Invalid action specified: " . $action;
     }
 }
 
@@ -86,6 +129,7 @@ $result = $conn->query($sql);
 if (!$result) {
     die("Query failed: " . $conn->error);
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -375,6 +419,7 @@ if (!$result) {
                             <th>Student</th>
                             <th>Roll No</th>
                             <th>Status</th>
+                            <th>Video</th>
                             <th>Feedback</th>
                             <th>Actions</th>
                         </tr>
@@ -398,7 +443,7 @@ if (!$result) {
                                 <td><?= htmlspecialchars($row['roll_number']) ?></td>
                                 <td>
                                     <span class="status-badge status-<?= strtolower($row['status']) ?>">
-                                        <?= $row['status'] ?>
+                                        <?= ucfirst($row['status']) ?>
                                     </span>
                                 </td>
                                 <td>
@@ -426,7 +471,7 @@ if (!$result) {
                                 </td>
                                 <td>
                                     <?php if ($row['status'] === 'pending'): ?>
-                                        <button type="button" class="btn btn-video" onclick="openFeedbackModal(<?= $row['participation_id'] ?>, '<?= htmlspecialchars($row['name']) ?>', '<?= htmlspecialchars($row['event_title']) ?>', 'confirmed', <?= $spots ?>)">
+                                        <button type="button" class="btn btn-approve" onclick="openFeedbackModal(<?= $row['participation_id'] ?>, '<?= htmlspecialchars($row['name']) ?>', '<?= htmlspecialchars($row['event_title']) ?>', 'confirmed', <?= $spots ?>)">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
                                         <button type="button" class="btn btn-reject" onclick="openFeedbackModal(<?= $row['participation_id'] ?>, '<?= htmlspecialchars($row['name']) ?>', '<?= htmlspecialchars($row['event_title']) ?>', 'rejected', <?= $spots ?>)">
@@ -434,7 +479,7 @@ if (!$result) {
                                         </button>
                                     <?php else: ?>
                                         <small style="color: #6c757d; font-style: italic;">
-                                            Already <?= $row['status'] ?>
+                                            Already <?= ucfirst($row['status']) ?>
                                         </small>
                                         <br>
                                         <button type="button" class="btn btn-feedback" onclick="openFeedbackModal(<?= $row['participation_id'] ?>, '<?= htmlspecialchars($row['name']) ?>', '<?= htmlspecialchars($row['event_title']) ?>', 'feedback', <?= $spots ?>)">
@@ -570,6 +615,7 @@ if (!$result) {
             const modal = document.getElementById('feedbackModal');
             modal.style.display = 'none';
         }
+        
         function openVideoModal(videoPath, eventTitle) {
             const modal = document.getElementById('videoModal');
             const modalVideo = document.getElementById('modalVideo');

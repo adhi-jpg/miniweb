@@ -43,8 +43,8 @@ try {
     // Start transaction
     $conn->begin_transaction();
     
-    // Insert the order into orders table
-    $insert_order = $conn->prepare("INSERT INTO orders (user_id, item_id, quantity, total_price, payment_method, status, ordered_at) VALUES (?, ?, ?, ?, ?, 'completed', NOW())");
+    // Insert the order into orders table with 'pending' status (awaiting admin approval)
+    $insert_order = $conn->prepare("INSERT INTO orders (user_id, item_id, quantity, total_price, payment_method, status, ordered_at) VALUES (?, ?, ?, ?, ?, 'pending', NOW())");
     $insert_order->bind_param("iiids", $user_id, $item_id, $quantity, $total_price, $payment_method);
     
     if (!$insert_order->execute()) {
@@ -53,18 +53,13 @@ try {
     
     $order_id = $conn->insert_id;
     
-    // Update merchandise stock
-    $update_stock = $conn->prepare("UPDATE merchandise SET stock = stock - ? WHERE item_id = ?");
-    $update_stock->bind_param("ii", $quantity, $item_id);
-    
-    if (!$update_stock->execute()) {
-        throw new Exception("Failed to update stock: " . $update_stock->error);
-    }
+    // Note: We don't update stock here since order is pending admin approval
+    // Stock will be updated when admin approves the order
     
     // Commit transaction
     $conn->commit();
     
-    $success_message = "Order placed successfully!";
+    $success_message = "Order placed successfully and is awaiting admin approval!";
     $order_success = true;
     
 } catch (Exception $e) {
@@ -110,7 +105,7 @@ try {
         }
         
         .success-header {
-            background: linear-gradient(135deg, #28a745, #20c997);
+            background: linear-gradient(135deg, #f39c12, #e67e22);
             color: white;
             padding: 40px 30px;
         }
@@ -147,7 +142,7 @@ try {
             border-radius: 15px;
             padding: 25px;
             margin: 25px 0;
-            border-left: 5px solid #28a745;
+            border-left: 5px solid #f39c12;
         }
         
         .error-details {
@@ -156,6 +151,20 @@ try {
             padding: 25px;
             margin: 25px 0;
             border-left: 5px solid #dc3545;
+        }
+        
+        .pending-notice {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 1px solid #f39c12;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+            color: #856404;
+        }
+        
+        .pending-notice h4 {
+            margin-bottom: 10px;
+            color: #b45309;
         }
         
         .detail-row {
@@ -184,7 +193,23 @@ try {
             margin-top: 15px;
             font-size: 18px;
             font-weight: bold;
-            color: #28a745;
+            color: #f39c12;
+        }
+        
+        .status-row {
+            border-top: 2px solid #ddd;
+            padding-top: 15px;
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            color: #f39c12;
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
         }
         
         .action-buttons {
@@ -272,13 +297,19 @@ try {
         <?php if ($order_success): ?>
             <div class="success-header">
                 <div class="success-icon">
-                    <i class="fas fa-check-circle"></i>
+                    <i class="fas fa-clock"></i>
                 </div>
                 <h1>Payment Successful!</h1>
-                <p>Your order has been placed successfully</p>
+                <p>Your order is now pending admin approval</p>
             </div>
             
             <div class="success-body">
+                <div class="pending-notice">
+                    <h4><i class="fas fa-info-circle"></i> Order Status</h4>
+                    <p><strong>Your order has been received and payment confirmed!</strong></p>
+                    <p>Your order is currently <strong>pending admin approval</strong>. You will be notified once it's been reviewed and approved by our team.</p>
+                </div>
+                
                 <div class="order-details">
                     <h3><i class="fas fa-receipt"></i> Order Details</h3>
                     <div class="detail-row">
@@ -296,6 +327,14 @@ try {
                     <div class="detail-row">
                         <span class="detail-label">Payment Method:</span>
                         <span class="detail-value"><?= ucfirst($payment_method) ?></span>
+                    </div>
+                    <div class="detail-row status-row">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value">
+                            <span class="status-pending">
+                                <i class="fas fa-clock"></i> Pending Approval
+                            </span>
+                        </span>
                     </div>
                     <div class="detail-row total-row">
                         <span class="detail-label">Total Paid:</span>
@@ -316,7 +355,7 @@ try {
                     <a href="student_buy_merchandise.php" class="btn btn-primary">
                         <i class="fas fa-shopping-cart"></i> Continue Shopping
                     </a>
-                    <a href="student_dashboard.php" class="btn btn-secondary">
+                    <a href="dashboard_student.php" class="btn btn-secondary">
                         <i class="fas fa-home"></i> Back to Dashboard
                     </a>
                 </div>
@@ -350,11 +389,6 @@ try {
                     <p><small>Please provide this information when contacting support</small></p>
                 </div>
                 <?php endif; ?>
-                
-                <div class="action-buttons">
-                    <a href="contact_support.php" class="btn btn-primary">
-                        <i class="fas fa-headset"></i> Contact Support
-                    </a>
                     <a href="dashboard_student.php" class="btn btn-secondary">
                         <i class="fas fa-home"></i> Back to Dashboard
                     </a>

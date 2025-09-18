@@ -7,9 +7,124 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
+// Handle AJAX requests for order status updates
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_request'])) {
+    header('Content-Type: application/json');
+    
+    $order_id = isset($_POST['order_id']) ? (int)$_POST['order_id'] : 0;
+    $status = isset($_POST['status']) ? trim($_POST['status']) : '';
+    
+    // Validate input
+    if ($order_id <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid order ID']);
+        exit();
+    }
+    
+    $allowed_statuses = ['completed', 'cancelled'];
+    if (!in_array($status, $allowed_statuses)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid status value']);
+        exit();
+    }
+    
+    try {
+        // Check if order exists and is pending
+        $check_query = "SELECT order_id, status FROM orders WHERE order_id = ?";
+        $check_stmt = $conn->prepare($check_query);
+        
+        if (!$check_stmt) {
+            throw new Exception("Failed to prepare check statement: " . $conn->error);
+        }
+        
+        $check_stmt->bind_param("i", $order_id);
+        $check_stmt->execute();
+        $result = $check_stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            echo json_encode(['success' => false, 'message' => 'Order not found']);
+            exit();
+        }
+        
+        $order = $result->fetch_assoc();
+        $current_status = trim($order['status']);
+        
+        // Check if order is already processed
+        if (!empty($current_status) && $current_status !== 'pending') {
+            echo json_encode(['success' => false, 'message' => 'Order has already been processed']);
+            exit();
+        }
+        
+        $check_stmt->close();
+        
+        // Begin transaction for stock management
+        $conn->begin_transaction();
+        
+        // Get order details for stock update
+        $order_query = "SELECT item_id, quantity FROM orders WHERE order_id = ?";
+        $order_stmt = $conn->prepare($order_query);
+        $order_stmt->bind_param("i", $order_id);
+        $order_stmt->execute();
+        $order_details = $order_stmt->get_result()->fetch_assoc();
+        $order_stmt->close();
+        
+        // Update the order status
+        $update_query = "UPDATE orders SET status = ?, updated_at = NOW() WHERE order_id = ?";
+        $update_stmt = $conn->prepare($update_query);
+        
+        if (!$update_stmt) {
+            throw new Exception("Failed to prepare update statement: " . $conn->error);
+        }
+        
+        $update_stmt->bind_param("si", $status, $order_id);
+        
+        if (!$update_stmt->execute()) {
+            throw new Exception("Failed to update order: " . $update_stmt->error);
+        }
+        
+        // If approving order (completed), reduce stock
+        if ($status === 'completed' && $order_details) {
+            $stock_query = "UPDATE merchandise SET stock = stock - ? WHERE item_id = ? AND stock >= ?";
+            $stock_stmt = $conn->prepare($stock_query);
+            $stock_stmt->bind_param("iii", $order_details['quantity'], $order_details['item_id'], $order_details['quantity']);
+            
+            if (!$stock_stmt->execute()) {
+                throw new Exception("Failed to update stock: " . $stock_stmt->error);
+            }
+            
+            // Check if stock was actually updated (sufficient stock was available)
+            if ($stock_stmt->affected_rows === 0) {
+                throw new Exception("Insufficient stock available for this order");
+            }
+            
+            $stock_stmt->close();
+        }
+        
+        // Commit transaction
+        $conn->commit();
+        
+        if ($update_stmt->affected_rows > 0) {
+            $action = $status === 'completed' ? 'approved' : 'rejected';
+            $stock_msg = $status === 'completed' ? ' and stock has been updated' : '';
+            echo json_encode([
+                'success' => true, 
+                'message' => "Order #{$order_id} has been successfully {$action}{$stock_msg}!"
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No changes were made']);
+        }
+        
+        $update_stmt->close();
+        
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $conn->rollback();
+        error_log("Error updating order status: " . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    
+    exit();
+}
 
-
-// Fetch orders
+// Fetch orders for display
 $query = "
     SELECT o.order_id, o.item_id, o.quantity, o.total_price, o.status, o.ordered_at, o.payment_method,
            m.name AS item_name, sp.name AS student_name, sp.roll_number
@@ -17,19 +132,28 @@ $query = "
     JOIN merchandise m ON o.item_id = m.item_id
     JOIN student_profiles sp ON o.user_id = sp.user_id
     ORDER BY 
-        CASE o.status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 END,
+        CASE 
+            WHEN o.status = '' OR o.status IS NULL OR o.status = 'pending' THEN 1 
+            WHEN o.status = 'completed' THEN 2 
+            WHEN o.status = 'cancelled' THEN 3 
+        END,
         o.order_id DESC
 ";
 $result = $conn->query($query);
 
 // Calculate statistics
-$stats = ['total' => 0, 'pending' => 0];
+$stats = ['total' => 0, 'pending' => 0, 'completed' => 0, 'cancelled' => 0];
 if ($result && $result->num_rows > 0) {
     $result->data_seek(0);
     while ($row = $result->fetch_assoc()) {
         $stats['total']++;
-        if ($row['status'] === 'pending') {
+        $status = trim($row['status']);
+        if (empty($status) || $status === 'pending') {
             $stats['pending']++;
+        } else {
+            if (isset($stats[$status])) {
+                $stats[$status]++;
+            }
         }
     }
     $result->data_seek(0);
@@ -84,37 +208,17 @@ if ($result && $result->num_rows > 0) {
             overflow: hidden;
         }
 
-        .header-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
-            animation: float 20s linear infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateX(-100px); }
-            100% { transform: translateX(100px); }
-        }
-
         .header-section h1 { 
             font-size: 3rem; 
             font-weight: 800; 
             margin-bottom: 12px; 
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            position: relative;
-            z-index: 2;
         }
         
         .header-section .subtitle { 
             font-size: 1.2rem; 
             opacity: 0.95; 
             font-weight: 300;
-            position: relative;
-            z-index: 2;
         }
 
         .message-alert {
@@ -154,11 +258,6 @@ if ($result && $result->num_rows > 0) {
             height: 30px;
             border-radius: 50%;
         }
-        
-        .message-alert .close-btn:hover { 
-            opacity: 1; 
-            background: rgba(0,0,0,0.1);
-        }
 
         .dashboard-stats {
             display: grid; 
@@ -177,19 +276,6 @@ if ($result && $result->num_rows > 0) {
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 1px solid rgba(102, 126, 234, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-widget::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.8), transparent);
-            transition: left 0.5s;
         }
 
         .stat-widget:hover { 
@@ -197,18 +283,9 @@ if ($result && $result->num_rows > 0) {
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
         }
 
-        .stat-widget:hover::before {
-            left: 100%;
-        }
-
         .stat-icon { 
             font-size: 2.5rem; 
             margin-bottom: 15px; 
-            transition: transform 0.3s;
-        }
-        
-        .stat-widget:hover .stat-icon {
-            transform: scale(1.1);
         }
 
         .stat-number { 
@@ -228,8 +305,8 @@ if ($result && $result->num_rows > 0) {
 
         .total-orders { color: #667eea; }
         .pending-orders { color: #f39c12; }
-        .approved-orders { color: #00c896; }
-        .rejected-orders { color: #e74c3c; }
+        .completed-orders { color: #00c896; }
+        .cancelled-orders { color: #e74c3c; }
 
         .controls-panel {
             padding: 30px; 
@@ -239,7 +316,6 @@ if ($result && $result->num_rows > 0) {
             gap: 20px; 
             flex-wrap: wrap; 
             align-items: center;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .search-container { 
@@ -264,7 +340,6 @@ if ($result && $result->num_rows > 0) {
             outline: none; 
             border-color: #667eea; 
             box-shadow: 0 5px 25px rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px);
         }
 
         .search-icon { 
@@ -289,12 +364,6 @@ if ($result && $result->num_rows > 0) {
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
 
-        .filter-select:focus { 
-            outline: none; 
-            border-color: #667eea; 
-            box-shadow: 0 5px 25px rgba(102, 126, 234, 0.2);
-        }
-
         .data-table-wrapper { 
             overflow-x: auto; 
             background: white; 
@@ -304,7 +373,7 @@ if ($result && $result->num_rows > 0) {
         .data-table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 800px; 
+            min-width: 1000px; 
         }
 
         .data-table th, .data-table td { 
@@ -320,19 +389,10 @@ if ($result && $result->num_rows > 0) {
             text-transform: uppercase; 
             letter-spacing: 1px; 
             font-size: 0.85rem;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .data-table tbody tr {
-            transition: all 0.3s;
         }
 
         .data-table tbody tr:hover { 
             background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%); 
-            transform: scale(1.01);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .order-id-cell { 
@@ -402,13 +462,96 @@ if ($result && $result->num_rows > 0) {
             min-width: 90px; 
             justify-content: center;
             box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            border: 2px solid transparent;
         }
 
         .status-badge.pending { 
             background: linear-gradient(135deg, #fff3cd, #ffeaa7); 
             color: #856404; 
-            border-color: #f39c12;
+        }
+
+        .status-badge.completed { 
+            background: linear-gradient(135deg, #d1f2eb, #a3e6d7); 
+            color: #0e7b5a;
+        }
+
+        .status-badge.cancelled { 
+            background: linear-gradient(135deg, #fdeaea, #fbb8bb); 
+            color: #a02834;
+        }
+
+        .actions-cell {
+            white-space: nowrap;
+            width: 180px;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .approve-btn {
+            background: linear-gradient(135deg, #00c896, #00b383);
+            color: white;
+        }
+
+        .approve-btn:hover {
+            background: linear-gradient(135deg, #00b383, #009770);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 200, 150, 0.3);
+        }
+
+        .reject-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .reject-btn:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .action-btn:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .updated-row { 
+            background: linear-gradient(135deg, #d4edda, #a3e6d7) !important; 
+            animation: highlightFade 4s ease-out; 
+        }
+
+        @keyframes highlightFade {
+            0% { 
+                background: linear-gradient(135deg, #d4edda, #a3e6d7) !important; 
+                transform: scale(1.02);
+            }
+            75% { 
+                background: linear-gradient(135deg, #d4edda, #a3e6d7) !important; 
+            }
+            100% { 
+                background: white !important; 
+                transform: scale(1);
+            }
         }
 
         .empty-state { 
@@ -432,90 +575,27 @@ if ($result && $result->num_rows > 0) {
             font-weight: 600;
         }
 
-        .empty-state p {
-            font-size: 1.1rem;
-            opacity: 0.8;
-        }
-
-        .no-results { 
-            text-align: center; 
-            padding: 60px 20px; 
-            color: #6c757d; 
-            display: none; 
-            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-        }
-
-        .no-results i { 
-            font-size: 3rem; 
-            margin-bottom: 20px; 
-            color: #dee2e6; 
-        }
-
-        .no-results h3 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        .updated-row { 
-            background: linear-gradient(135deg, #d4edda, #a3e6d7) !important; 
-            animation: highlightFade 4s ease-out; 
-        }
-
-        @keyframes highlightFade {
-            0% { 
-                background: linear-gradient(135deg, #d4edda, #a3e6d7) !important; 
-                transform: scale(1.02);
-            }
-            75% { 
-                background: linear-gradient(135deg, #d4edda, #a3e6d7) !important; 
-            }
-            100% { 
-                background: white !important; 
-                transform: scale(1);
-            }
-        }
-
         @media (max-width: 768px) {
             body { padding: 15px; }
-            
             .header-section { padding: 25px 20px; }
             .header-section h1 { font-size: 2.2rem; }
-            
             .dashboard-stats { 
                 grid-template-columns: repeat(2, 1fr); 
                 padding: 30px 25px; 
                 gap: 20px;
             }
-            
-            .stat-widget { padding: 20px 15px; }
-            .stat-number { font-size: 2.2rem; }
-            
             .controls-panel { 
                 flex-direction: column; 
                 align-items: stretch; 
                 padding: 25px 20px;
             }
-            
-            .search-container { max-width: none; }
-            
             .data-table th, .data-table td { 
                 padding: 12px 8px; 
                 font-size: 0.85rem; 
             }
-        }
-
-        @media (max-width: 480px) {
-            .dashboard-stats { 
-                grid-template-columns: 1fr; 
-            }
-            
-            .header-section h1 { font-size: 1.8rem; }
-            .header-section .subtitle { font-size: 1rem; }
-            
-            .data-table th, .data-table td { 
-                padding: 10px 6px; 
-                font-size: 0.8rem; 
+            .action-btn {
+                font-size: 0.75rem;
+                padding: 6px 10px;
             }
         }
     </style>
@@ -544,6 +624,16 @@ if ($result && $result->num_rows > 0) {
                 <div class="stat-number pending-orders" id="pendingStat"><?= $stats['pending'] ?></div>
                 <div class="stat-label">Pending Orders</div>
             </div>
+            <div class="stat-widget">
+                <i class="fas fa-check-circle stat-icon completed-orders"></i>
+                <div class="stat-number completed-orders" id="completedStat"><?= $stats['completed'] ?></div>
+                <div class="stat-label">Approved Orders</div>
+            </div>
+            <div class="stat-widget">
+                <i class="fas fa-times-circle stat-icon cancelled-orders"></i>
+                <div class="stat-number cancelled-orders" id="cancelledStat"><?= $stats['cancelled'] ?></div>
+                <div class="stat-label">Rejected Orders</div>
+            </div>
         </div>
 
         <div class="controls-panel">
@@ -554,6 +644,8 @@ if ($result && $result->num_rows > 0) {
             <select class="filter-select" id="statusFilter">
                 <option value="">All Orders</option>
                 <option value="pending">Pending Orders</option>
+                <option value="completed">Approved Orders</option>
+                <option value="cancelled">Rejected Orders</option>
             </select>
         </div>
 
@@ -571,11 +663,16 @@ if ($result && $result->num_rows > 0) {
                         <th>Payment</th>
                         <th>Ordered At</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $result->fetch_assoc()): ?>
-                    <tr class="order-row" data-status="<?= htmlspecialchars($row['status']) ?>" data-order-id="<?= $row['order_id'] ?>">
+                    <?php while ($row = $result->fetch_assoc()): 
+                        $status = trim($row['status']);
+                        $displayStatus = empty($status) || $status === 'pending' ? 'pending' : $status;
+                        $isPending = empty($status) || $status === 'pending';
+                    ?>
+                    <tr class="order-row" data-status="<?= htmlspecialchars($displayStatus) ?>" data-order-id="<?= $row['order_id'] ?>">
                         <td class="order-id-cell">#<?= $row['order_id'] ?></td>
                         <td class="student-name"><?= htmlspecialchars($row['student_name']) ?></td>
                         <td class="roll-number"><?= htmlspecialchars($row['roll_number']) ?></td>
@@ -585,20 +682,29 @@ if ($result && $result->num_rows > 0) {
                         <td class="payment-method-cell"><?= $row['payment_method'] ? htmlspecialchars($row['payment_method']) : 'N/A' ?></td>
                         <td class="date-cell"><?= $row['ordered_at'] ? date('M d, Y H:i', strtotime($row['ordered_at'])) : '—' ?></td>
                         <td class="status-cell">
-                            <span class="status-badge <?= htmlspecialchars($row['status']) ?>">
-                                <i class="fas fa-clock"></i>
-                                <?= htmlspecialchars($row['status']) ?>
+                            <span class="status-badge <?= htmlspecialchars($displayStatus) ?>">
+                                <i class="fas <?= $displayStatus === 'pending' ? 'fa-clock' : ($displayStatus === 'completed' ? 'fa-check' : 'fa-times') ?>"></i>
+                                <?= $displayStatus === 'completed' ? 'approved' : ($displayStatus === 'cancelled' ? 'rejected' : $displayStatus) ?>
                             </span>
+                        </td>
+                        <td class="actions-cell">
+                            <?php if ($isPending): ?>
+                                <button class="action-btn approve-btn" onclick="updateOrderStatus(<?= $row['order_id'] ?>, 'completed', this)">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button class="action-btn reject-btn" onclick="updateOrderStatus(<?= $row['order_id'] ?>, 'cancelled', this)">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            <?php else: ?>
+                                <span style="font-size: 0.85rem; color: #6c757d;">
+                                    <?= $displayStatus === 'completed' ? 'Approved' : 'Rejected' ?>
+                                </span>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>
             </table>
-            <div class="no-results" id="noResults">
-                <i class="fas fa-search"></i>
-                <h3>No Results Found</h3>
-                <p>Try adjusting your search criteria</p>
-            </div>
             <?php else: ?>
             <div class="empty-state">
                 <i class="fas fa-inbox empty-state-icon"></i>
@@ -629,18 +735,89 @@ if ($result && $result->num_rows > 0) {
             document.getElementById('messageAlert').style.display = 'none';
         }
 
+        function updateOrderStatus(orderId, status, button) {
+            if (!confirm(`Are you sure you want to ${status === 'completed' ? 'approve' : 'reject'} order #${orderId}?`)) {
+                return;
+            }
+            
+            const row = button.closest('tr');
+            row.classList.add('loading');
+            
+            const formData = new FormData();
+            formData.append('ajax_request', '1');
+            formData.append('order_id', orderId);
+            formData.append('status', status);
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                row.classList.remove('loading');
+                
+                if (data.success) {
+                    // Update the status badge
+                    const statusCell = row.querySelector('.status-cell');
+                    const statusBadge = statusCell.querySelector('.status-badge');
+                    statusBadge.className = `status-badge ${status}`;
+                    statusBadge.innerHTML = `<i class="fas ${status === 'completed' ? 'fa-check' : 'fa-times'}"></i> ${status === 'completed' ? 'approved' : 'rejected'}`;
+                    
+                    // Update the actions cell
+                    const actionsCell = row.querySelector('.actions-cell');
+                    actionsCell.innerHTML = `<span style="font-size: 0.85rem; color: #6c757d;">${status === 'completed' ? 'Approved' : 'Rejected'}</span>`;
+                    
+                    // Update row data attribute
+                    row.setAttribute('data-status', status);
+                    
+                    // Add highlight animation
+                    row.classList.add('updated-row');
+                    setTimeout(() => {
+                        row.classList.remove('updated-row');
+                    }, 4000);
+                    
+                    // Update statistics
+                    updateStats();
+                    
+                    showMessage(data.message, 'success');
+                } else {
+                    showMessage(data.message || 'An error occurred', 'error');
+                }
+            })
+            .catch(error => {
+                row.classList.remove('loading');
+                console.error('Error:', error);
+                showMessage('Network error occurred', 'error');
+            });
+        }
+
+        function updateStats() {
+            const rows = document.querySelectorAll('.order-row');
+            const stats = { total: 0, pending: 0, completed: 0, cancelled: 0 };
+            
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                stats.total++;
+                if (stats[status] !== undefined) {
+                    stats[status]++;
+                }
+            });
+            
+            document.getElementById('totalStat').textContent = stats.total;
+            document.getElementById('pendingStat').textContent = stats.pending;
+            document.getElementById('completedStat').textContent = stats.completed;
+            document.getElementById('cancelledStat').textContent = stats.cancelled;
+        }
+
         // Search and filter functionality
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             const statusFilter = document.getElementById('statusFilter');
             const orderRows = document.querySelectorAll('.order-row');
-            const noResults = document.getElementById('noResults');
-            const dataTable = document.getElementById('ordersTable');
 
             function filterOrders() {
                 const searchTerm = searchInput.value.toLowerCase().trim();
                 const statusValue = statusFilter.value.toLowerCase();
-                let visibleCount = 0;
 
                 orderRows.forEach(row => {
                     const studentName = row.querySelector('.student-name').textContent.toLowerCase();
@@ -659,29 +836,13 @@ if ($result && $result->num_rows > 0) {
 
                     if (matchesSearch && matchesStatus) {
                         row.style.display = '';
-                        visibleCount++;
                     } else {
                         row.style.display = 'none';
                     }
                 });
-
-                if (dataTable && noResults) {
-                    if (visibleCount === 0 && orderRows.length > 0) {
-                        dataTable.style.display = 'none';
-                        noResults.style.display = 'block';
-                    } else {
-                        dataTable.style.display = 'table';
-                        noResults.style.display = 'none';
-                    }
-                }
             }
 
-            let searchTimeout;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(filterOrders, 300);
-            });
-
+            searchInput.addEventListener('input', filterOrders);
             statusFilter.addEventListener('change', filterOrders);
         });
     </script>
