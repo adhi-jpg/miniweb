@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['report_id'])) {
     $action = $_POST['action'];
     $feedback = mysqli_real_escape_string($conn, $_POST['feedback']);
 
-    if (in_array($action, ['reviewed', 'rejected'])) {
+    if (in_array($action, ['approved', 'rejected'])) {
         $query = "UPDATE reports SET status = '$action', feedback = '$feedback' WHERE id = $report_id";
         if ($conn->query($query)) {
             $status_msg = "✅ Report #$report_id updated successfully.";
@@ -251,7 +251,7 @@ $result = $conn->query("SELECT * FROM reports WHERE status = 'submitted' ORDER B
                                         ><?= htmlspecialchars($row['feedback']) ?></textarea>
                                         <select name="action" required>
                                             <option value="">Select Action</option>
-                                            <option value="reviewed" <?= ($row['status'] ?? '') === 'reviewed' ? 'selected' : '' ?>>
+                                            <option value="approved" <?= ($row['status'] ?? '') === 'approved' ? 'selected' : '' ?>>
                                                 ✅ Approve
                                             </option>
                                             <option value="rejected" <?= ($row['status'] ?? '') === 'rejected' ? 'selected' : '' ?>>

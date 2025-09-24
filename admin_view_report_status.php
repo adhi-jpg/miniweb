@@ -18,7 +18,7 @@ $result = $conn->query($sql);
 $stats_sql = "SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'submitted' THEN 1 ELSE 0 END) as submitted,
-                SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as approved,
+                SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
                 SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
               FROM reports WHERE submitted_by = $admin_id";
 $stats = $conn->query($stats_sql)->fetch_assoc();
@@ -496,7 +496,7 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
                 <td>
                   <span class="status-badge status-<?= htmlspecialchars($row['status']) ?>">
                     <?php
-                      if ($row['status'] === 'reviewed') {
+                      if ($row['status'] === 'approved') {
                         echo '<i class="fas fa-check"></i> Approved';
                       } elseif ($row['status'] === 'rejected') {
                         echo '<i class="fas fa-times"></i> Rejected';
