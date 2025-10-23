@@ -16,51 +16,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_attendance'])) {
     $event_id = intval($_POST['event_id']);
     $date = mysqli_real_escape_string($conn, $_POST['date']);
     
-    // Check if statuses array exists
-    if (!isset($_POST['status']) || empty($_POST['status'])) {
-        $error_msg = "❌ No attendance data received. Please mark at least one student's attendance.";
+    // Validate date is not in the future
+    if (strtotime($date) > strtotime(date('Y-m-d'))) {
+        $error_msg = "❌ Cannot mark attendance for future dates. Please select today's date or earlier.";
     } else {
-        $statuses = $_POST['status'];
-        $success_count = 0;
-        $error_count = 0;
-        
-        foreach ($statuses as $user_id => $status) {
-            // Skip empty status values
-            if (empty($status)) {
-                continue;
-            }
-            
-            $user_id = intval($user_id);
-            $status_clean = mysqli_real_escape_string($conn, $status);
-            
-            // Validate status values
-            if (!in_array($status_clean, ['present', 'absent'])) {
-                continue;
-            }
-
-            // Use INSERT ... ON DUPLICATE KEY UPDATE to handle both insert and update
-            $upsert_query = "INSERT INTO attendance (event_id, user_id, status, date) 
-                           VALUES (?, ?, ?, ?) 
-                           ON DUPLICATE KEY UPDATE status = VALUES(status)";
-            
-            $stmt = mysqli_prepare($conn, $upsert_query);
-            mysqli_stmt_bind_param($stmt, "iiss", $event_id, $user_id, $status_clean, $date);
-            
-            if (mysqli_stmt_execute($stmt)) {
-                $success_count++;
-            } else {
-                $error_count++;
-            }
-            mysqli_stmt_close($stmt);
-        }
-        
-        if ($success_count > 0) {
-            $status_msg = "✅ Successfully saved attendance for $success_count student(s)!";
-            if ($error_count > 0) {
-                $status_msg .= " ($error_count failed)";
-            }
+        // Check if statuses array exists
+        if (!isset($_POST['status']) || empty($_POST['status'])) {
+            $error_msg = "❌ No attendance data received. Please mark at least one student's attendance.";
         } else {
-            $error_msg = "❌ No attendance records were saved. Please try again.";
+            $statuses = $_POST['status'];
+            $success_count = 0;
+            $error_count = 0;
+            
+            foreach ($statuses as $user_id => $status) {
+                // Skip empty status values
+                if (empty($status)) {
+                    continue;
+                }
+                
+                $user_id = intval($user_id);
+                $status_clean = mysqli_real_escape_string($conn, $status);
+                
+                // Validate status values
+                if (!in_array($status_clean, ['present', 'absent'])) {
+                    continue;
+                }
+
+                // Use INSERT ... ON DUPLICATE KEY UPDATE to handle both insert and update
+                $upsert_query = "INSERT INTO attendance (event_id, user_id, status, date) 
+                               VALUES (?, ?, ?, ?) 
+                               ON DUPLICATE KEY UPDATE status = VALUES(status)";
+                
+                $stmt = mysqli_prepare($conn, $upsert_query);
+                mysqli_stmt_bind_param($stmt, "iiss", $event_id, $user_id, $status_clean, $date);
+                
+                if (mysqli_stmt_execute($stmt)) {
+                    $success_count++;
+                } else {
+                    $error_count++;
+                }
+                mysqli_stmt_close($stmt);
+            }
+            
+            if ($success_count > 0) {
+                $status_msg = "✅ Successfully saved attendance for $success_count student(s)!";
+                if ($error_count > 0) {
+                    $status_msg .= " ($error_count failed)";
+                }
+            } else {
+                $error_msg = "❌ No attendance records were saved. Please try again.";
+            }
         }
     }
 }
@@ -374,7 +379,7 @@ if ($selected_event) {
 
                 <div class="form-group">
                     <label for="date"><i class="fas fa-calendar-day"></i> Date</label>
-                    <input type="date" name="date" id="date" value="<?= htmlspecialchars($selected_date) ?>" required>
+                    <input type="date" name="date" id="date" value="<?= htmlspecialchars($selected_date) ?>" max="<?= date('Y-m-d') ?>" required>
                 </div>
 
                 <div class="form-group">
@@ -512,6 +517,18 @@ if ($selected_event) {
         
         // Form validation
         document.getElementById('attendanceForm')?.addEventListener('submit', function(e) {
+            const dateInput = document.querySelector('input[name="date"]');
+            const selectedDate = new Date(dateInput.value + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Check if date is in the future
+            if (selectedDate > today) {
+                alert('Cannot mark attendance for future dates. Please select today\'s date or earlier.');
+                e.preventDefault();
+                return false;
+            }
+            
             const selects = document.querySelectorAll('.status-select');
             const selectedCount = Array.from(selects).filter(s => s.value !== '').length;
             

@@ -210,9 +210,9 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
                         <tr>
                             <th><i class="fas fa-heading"></i> Title</th>
                             <th><i class="fas fa-align-left"></i> Description</th>
+                            <th><i class="fas fa-user"></i> Submitted By</th>
                             <th><i class="fas fa-calendar"></i> Date</th>
                             <th><i class="fas fa-map-marker-alt"></i> Venue</th>
-                            <th><i class="fas fa-user"></i> Submitted By</th>
                             <th><i class="fas fa-flag"></i> Status</th>
                             <th><i class="fas fa-cogs"></i> Actions</th>
                         </tr>
@@ -244,6 +244,12 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
                                     </div>
                                 </td>
                                 <td>
+                                    <div class="admin-info">
+                                        <i class="fas fa-envelope"></i>
+                                        <?= htmlspecialchars($row['admin_email']) ?>
+                                    </div>
+                                </td>
+                                <td>
                                     <div class="date-info">
                                         <i class="fas fa-calendar-day"></i>
                                         <?= date('M d, Y', strtotime($row['proposed_date'])) ?>
@@ -253,12 +259,6 @@ $stats = $conn->query($stats_sql)->fetch_assoc();
                                     <div class="venue-info">
                                         <i class="fas fa-location-arrow"></i>
                                         <?= htmlspecialchars($row['venue']) ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="admin-info">
-                                        <i class="fas fa-envelope"></i>
-                                        <?= htmlspecialchars($row['admin_email']) ?>
                                     </div>
                                 </td>
                                 <td>
